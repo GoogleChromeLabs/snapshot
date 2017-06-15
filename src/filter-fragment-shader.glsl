@@ -1,4 +1,3 @@
-#version 300 es
 /*
   Copyright 2017 Google Inc. All Rights Reserved.
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +13,7 @@
 
 precision highp float;
 
-in vec2 texCoords;
+varying vec2 texCoords;
 
 uniform sampler2D textureSampler;
 uniform vec2 sourceSize;
@@ -23,8 +22,6 @@ uniform float warmth;
 uniform float sharpen;
 uniform float brightness;
 uniform float contrast;
-
-out vec4 color;
 
 vec3 HSVFromRGB(vec3 rgb) {
   float h;
@@ -66,7 +63,10 @@ vec3 HSVFromRGB(vec3 rgb) {
 vec3 RGBFromHSV(vec3 hsv) {
   float c = hsv.y * hsv.z;
   float a = hsv.x / 60.0;
-  while (a > 2.0) {
+  if (a > 2.0) {
+    a -= 2.0;
+  }
+  if (a > 2.0) {
     a -= 2.0;
   }
   float b = abs(a - 1.0);
@@ -92,17 +92,17 @@ vec3 RGBFromHSV(vec3 hsv) {
 }
 
 void main() {
-  vec4 tex = texture(textureSampler, texCoords);
+  vec4 tex = texture2D(textureSampler, texCoords);
 
-  vec4 texa = texture(textureSampler, texCoords + vec2(-sourceSize.x, -sourceSize.y));
-  vec4 texb = texture(textureSampler, texCoords + vec2(0.0, -sourceSize.y));
-  vec4 texc = texture(textureSampler, texCoords + vec2(sourceSize.x, -sourceSize.y));
-  vec4 texd = texture(textureSampler, texCoords + vec2(-sourceSize.x, 0.0));
-  vec4 texe = texture(textureSampler, texCoords + vec2(0.0, 0.0));
-  vec4 texf = texture(textureSampler, texCoords + vec2(sourceSize.x, 0.0));
-  vec4 texg = texture(textureSampler, texCoords + vec2(-sourceSize.x, sourceSize.y));
-  vec4 texh = texture(textureSampler, texCoords + vec2(0.0, sourceSize.y));
-  vec4 texi = texture(textureSampler, texCoords + vec2(sourceSize.x, sourceSize.y));
+  vec4 texa = texture2D(textureSampler, texCoords + vec2(-sourceSize.x, -sourceSize.y));
+  vec4 texb = texture2D(textureSampler, texCoords + vec2(0.0, -sourceSize.y));
+  vec4 texc = texture2D(textureSampler, texCoords + vec2(sourceSize.x, -sourceSize.y));
+  vec4 texd = texture2D(textureSampler, texCoords + vec2(-sourceSize.x, 0.0));
+  vec4 texe = texture2D(textureSampler, texCoords + vec2(0.0, 0.0));
+  vec4 texf = texture2D(textureSampler, texCoords + vec2(sourceSize.x, 0.0));
+  vec4 texg = texture2D(textureSampler, texCoords + vec2(-sourceSize.x, sourceSize.y));
+  vec4 texh = texture2D(textureSampler, texCoords + vec2(0.0, sourceSize.y));
+  vec4 texi = texture2D(textureSampler, texCoords + vec2(sourceSize.x, sourceSize.y));
 
   // Blur
   vec4 blur = texa + 2.0 * texb + texc + 2.0 * texd + 4.0 * texe + 2.0 * texf + texg + 2.0 * texh + texi;
@@ -112,7 +112,7 @@ void main() {
 
   vec3 hsv = HSVFromRGB(tex.rgb);
   hsv.y = hsv.y * saturation;
-  color = vec4(RGBFromHSV(hsv), tex.a);
+  vec4 color = vec4(RGBFromHSV(hsv), tex.a);
   color.r += warmth;
   color.b -= warmth;
 
@@ -122,4 +122,6 @@ void main() {
   float dist = 2.0 * max(abs(0.5 - texCoords.y) - 0.05, 0.0);
 
   color.a = 1.0;
+
+  gl_FragColor = color;
 }

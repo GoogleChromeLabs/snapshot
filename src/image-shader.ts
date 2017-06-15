@@ -11,28 +11,26 @@
   limitations under the License.
 */
 
-const BASE_VERTEX_SHADER = `#version 300 es
-layout(location = 0) in vec2 position;
-layout(location = 1) in vec2 uv;
+const BASE_VERTEX_SHADER = `
+attribute vec2 position;
+attribute vec2 uv;
 
-out vec2 texCoords;
+varying vec2 texCoords;
 
 void main() {
   gl_Position = vec4(position, 0, 1.0);
   texCoords = uv;
 }`;
 
-const BASE_FRAGMENT_SHADER = `#version 300 es
+const BASE_FRAGMENT_SHADER = `
 precision highp float;
 
-in vec2 texCoords;
+varying vec2 texCoords;
 
 uniform sampler2D textureSampler;
 
-out vec4 color;
-
 void main() {
-  color = texture(textureSampler, texCoords);
+  gl_FragColor = texture2D(textureSampler, texCoords);
 }`;
 
 const POSITIONS = new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]);
@@ -58,7 +56,7 @@ export default class ImageShader {
 
   constructor() {
     this.canvas = document.createElement('canvas');
-    const context = this.canvas.getContext('webgl2');
+    const context = this.canvas.getContext('webgl');
 
     if (context === null) {
       throw new Error(`Couldn't get a WebGL context`);
@@ -92,8 +90,10 @@ export default class ImageShader {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.textureId);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    // gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   }
 
@@ -231,8 +231,12 @@ export default class ImageShader {
 
   private createVAO(index, positions, uvs) {
     const gl = this.context;
-    const vaoId = gl.createVertexArray();
-    gl.bindVertexArray(vaoId);
+    const ext = gl.getExtension('OES_vertex_array_object');
+    if (!ext) {
+      throw new Error(`Browser doesn't support VAOs`);
+    }
+    const vaoId = ext.createVertexArrayOES();
+    ext.bindVertexArrayOES(vaoId);
     this.bindIndicesBuffer(index);
     this.bindAttributeBuffer(0, 2, positions);
     this.bindAttributeBuffer(1, 2, uvs);
