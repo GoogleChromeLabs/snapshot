@@ -1,0 +1,120 @@
+/*
+  Copyright 2017 Google Inc. All Rights Reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+      http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+import CaptureView from './capture-view';
+import EditView from './edit-view';
+import ImageView from './image-view';
+import View from './view';
+import ViewState from './view-state';
+
+class Router {
+  private currentView: View | null;
+  private currentLocation: string;
+
+  private captureView: CaptureView;
+  private editView: EditView;
+  private imageView: ImageView;
+
+  constructor() {
+    window.addEventListener('popstate', (e) => this.changeHandler(e.state));
+
+    this.captureView = new CaptureView();
+    this.editView = new EditView();
+    this.imageView = new ImageView();
+  }
+
+  changeHandler(state?: ViewState) {
+    // TODO: Not sure that I should take the state here
+
+    // Ignore any changes in the hash.
+    if (window.location.pathname === this.currentLocation) {
+      return;
+    }
+    this.currentLocation = window.location.pathname;
+
+    const parts = this.currentLocation.split('/');
+
+    if (this.currentView) {
+      this.currentView.hide();
+    }
+
+    if (!state) {
+      state = new ViewState();
+    }
+
+    let newView: View | null = null;
+
+    switch(parts[1]) {
+      // TODO: In the final app, the view for / will probably be browse
+      case '':
+      case 'capture':
+        newView = this.captureView;
+        break;
+      case 'edit':
+        newView = this.editView;
+        state.id = Number(parts[2]);
+        break;
+      case 'image':
+        newView = this.imageView;
+        state.id = Number(parts[2]);
+        break;
+      default:
+        // TODO: Proper 404
+        console.log('404');
+    }
+
+    if (newView) {
+      this.switch(newView, state);
+    } else {
+      // TODO: Something better?
+      console.log('Oh no, no view found!');
+    }
+  }
+
+  switch(newView: View, state: ViewState) {
+    if (this.currentView) {
+      this.currentView.hide();
+    }
+    newView.show(state);
+    this.currentView = newView;
+  }
+
+  visit(url: string) {
+    if (window.location.href === url) {
+      return;
+    }
+
+    let state;
+
+    if (this.currentView) {
+      state = this.currentView.getState();
+    }
+
+    window.history.replaceState(state, '', window.location.href);
+    window.history.pushState(null, '', url);
+    this.changeHandler();
+  }
+
+  click(event: MouseEvent) {
+    const anchor = event.target as HTMLAnchorElement;
+
+    if (event.metaKey || event.ctrlKey || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    this.visit(anchor.href);
+  }
+}
+
+export default new Router();

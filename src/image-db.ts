@@ -13,43 +13,57 @@
 
 const DB_VERSION = 1;
 
-export default class ImageDB {
-  private db: IDBDatabase;
+class ImageDB {
+  private dbPromise: Promise<IDBDatabase>;
+  private dbResolve: Function;
+  private dbReject: Function;
+
   constructor() {
     const request = indexedDB.open('image-db', DB_VERSION);
 
-    request.onerror = (reason) => this.error(reason);
-    request.onupgradeneeded = (event) => this.createObjectStore(event);
-    request.onsuccess = (event) => this.dbOpened(request);
+    this.dbPromise = new Promise((resolve, reject) => {
+      this.dbResolve = resolve;
+      this.dbReject = reject;
+
+      request.onerror = (reason) => this.dbReject(reason);
+      request.onupgradeneeded = (event) => this.createObjectStore(event);
+      request.onsuccess = (event) => this.dbOpened(request);
+    });
   }
 
-  store(image: Blob, id: string): Promise<{}> {
+  store(image: Blob): Promise<number> {
     const promise = new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['images'], 'readwrite');
-      const put = transaction.objectStore('images').put(image, id);
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['images'], 'readwrite');
+        const put = transaction.objectStore('images').put(image);
 
-      put.onsuccess = (event) => resolve();
-      put.onerror = reject;
+        put.onsuccess = (event) => resolve(put.result);
+        put.onerror = reject;
+      }).catch(reject);
     });
 
     return promise;
   }
 
-  retrieve(id: string): Promise<Blob> {
+  retrieve(id: number): Promise<Blob> {
     const promise = new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['images'], IDBTransaction.READ_ONLY);
-      const get = transaction.objectStore('images').get(id);
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['images'], IDBTransaction.READ_ONLY);
+        const get = transaction.objectStore('images').get(id);
 
-      get.onsuccess = (event) => resolve(get.result);
-      get.onerror = reject;
+        get.onsuccess = (event) => resolve(get.result);
+        get.onerror = reject;
+      }).catch(reject);
     });
 
     return promise;
   }
 
   private dbOpened(request: IDBOpenDBRequest) {
-    this.db = request.result;
-    this.db.onerror = (reason) => this.error(reason);
+    this.dbResolve(request.result);
+    this.dbPromise.then((db) => {
+      db.onerror = (reason) => this.error(reason);
+    });
   }
 
   private error(reason) {
@@ -57,6 +71,8 @@ export default class ImageDB {
   }
 
   private createObjectStore(event) {
-    event.target.result.createObjectStore('images');
+    event.target.result.createObjectStore('images', {autoIncrement: true});
   }
 }
+
+export default new ImageDB();

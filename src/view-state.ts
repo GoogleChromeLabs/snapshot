@@ -11,12 +11,6 @@
   limitations under the License.
 */
 
-import CaptureView from './capture-view';
-import ImageDB from './image-db';
-import router from './router';
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+export default class ViewState {
+  id: number;
 }
-
-router.changeHandler();
