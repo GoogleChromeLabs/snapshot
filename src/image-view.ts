@@ -16,41 +16,39 @@ import router from './router';
 import View from './view';
 import ViewState from './view-state';
 
-class ImageViewState extends ViewState {
-}
-
-export default class ImageView implements View {
+export default class ImageView extends View {
   private imageElement: HTMLImageElement;
-  private viewElement: HTMLElement;
   private editButton: HTMLButtonElement;
-  private state: ImageViewState;
 
   constructor() {
+    super(document.getElementById('image-view')!);
     this.imageElement = document.getElementById('output-image')! as HTMLImageElement;
-    this.viewElement = document.getElementById('image-view')!;
     this.editButton = document.getElementById('image-edit-button')! as HTMLButtonElement;
-    this.state = new ImageViewState();
     this.editButton.addEventListener('click', () => this.edit());
   }
 
-  show(state: ImageViewState) {
-    this.state = state;
+  show() {
+    const state = this.getState();
+
+    if (!state.id) {
+      // TODO: Better handling of errors?
+      throw new Error(`Couldn't get id of image`);
+    }
     this.imageElement.onload = () => URL.revokeObjectURL(this.imageElement.src);
     db.retrieve(state.id).then((blob) => {
       this.imageElement.src = URL.createObjectURL(blob);
     });
-    this.viewElement.style.display = 'block';
-  }
-
-  hide() {
-    this.viewElement.style.display = 'none';
-  }
-
-  getState() {
-    return this.state;
+    super.show();
   }
 
   edit() {
-    router.visit(`/edit/${this.state.id}`);
+    const state = this.getState();
+
+    if (!state.id) {
+      // TODO: Better handling of errors?
+      throw new Error(`Couldn't get id of image`);
+    }
+
+    router.visit(`/edit/${state.id}`);
   }
 }

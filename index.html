@@ -44,6 +44,10 @@
         overflow: hidden;
       }
 
+      #capture-view video.mirror {
+        transform: translate(-50%, -50%) scaleX(-1);
+      }
+
       #capture-view .button-ring {
         position: absolute;
         bottom: 100px;
@@ -90,7 +94,7 @@
   </head>
   <body>
     <div class="view-element" id="capture-view">
-      <video id="capture-preview" autoplay></video>
+      <video id="capture-preview"></video>
       <div class="button-ring">
         <button id="capture-button" aria-label="Take photo" autofocus tabindex="0"></button>
       </div>

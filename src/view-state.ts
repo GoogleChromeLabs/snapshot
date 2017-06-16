@@ -12,5 +12,6 @@
 */
 
 export default class ViewState {
-  id: number;
+  id?: number;
+  sliderValues?: Map<string, number>;
 }

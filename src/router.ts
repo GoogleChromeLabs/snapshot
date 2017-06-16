@@ -85,7 +85,8 @@ class Router {
     if (this.currentView) {
       this.currentView.hide();
     }
-    newView.show(state);
+    newView.setState(state);
+    newView.show();
     this.currentView = newView;
   }
 

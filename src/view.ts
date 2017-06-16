@@ -13,10 +13,27 @@
 
 import ViewState from './view-state';
 
-interface View {
-  show(state: ViewState): void;
-  hide(): void;
-  getState(): ViewState;
-}
+export default class View {
+  protected viewElement: HTMLElement;
+  private state?: ViewState;
 
-export default View;
+  constructor(viewElement: HTMLElement) {
+    this.viewElement = viewElement;
+  }
+
+  show(): void {
+    this.viewElement.style.display = 'block';
+  }
+
+  hide(): void {
+    this.viewElement.style.display = 'none';
+  }
+
+  getState(): ViewState {
+    return this.state || new ViewState();
+  }
+
+  setState(state: ViewState) {
+    this.state = state;
+  }
+}
