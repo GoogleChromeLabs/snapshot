@@ -8,6 +8,6 @@
     "type": "image/png",
     "sizes": "512x512"
   }],
-  "start_url": "./",
+  "start_url": "/",
   "display": "fullscreen"
 }

@@ -12,9 +12,9 @@
 */
 
 const FILES = [
-  'dist/app.min.js',
-  'index.html',
-  'manifest.json',
+  '/dist/app.min.js',
+  '/index.html',
+  '/manifest.json',
 ];
 
 self.addEventListener('install', (event) => {

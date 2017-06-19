@@ -12,67 +12,133 @@
 */
 
 declare class ImageCapture {
-  readonly videoStreamTrack: MediaStreamTrack;
-  constructor(track: MediaStreamTrack);
-  takePhoto(): Promise<Blob>;
+  readonly track: MediaStreamTrack;
+  constructor(videoTrack: MediaStreamTrack);
+  takePhoto(photoSettings?: PhotoSettings): Promise<Blob>;
   getPhotoCapabilities(): Promise<PhotoCapabilities>;
-  setOptions(photoSettings: PhotoSettings | null): Promise<void>;
+  getPhotoSettings(): Promise<PhotoSettings>;
   grabFrame(): Promise<ImageBitmap>;
 }
 
 interface PhotoCapabilities {
-  readonly whiteBalanceMode: MeteringMode;
-  readonly colorTemperature: MediaSettingsRange;
-  readonly exposureMode: MeteringMode;
-  readonly exposureCompensation: MediaSettingsRange;
-  readonly iso: MediaSettingsRange;
-  readonly redEyeReduction: boolean;
-  readonly focusMode: MeteringMode;
-
-  readonly brightness: MediaSettingsRange;
-  readonly contrast: MediaSettingsRange;
-  readonly saturation: MediaSettingsRange;
-  readonly sharpness: MediaSettingsRange;
+  readonly redEyeReduction: RedEyeReduction;
   readonly imageHeight: MediaSettingsRange;
   readonly imageWidth: MediaSettingsRange;
-  readonly zoom: MediaSettingsRange;
-  readonly fillLightMode: FillLightMode;
+  readonly fillLightMode: FillLightMode[];
 }
 
 interface PhotoSettings {
-  whiteBalanceMode: MeteringMode;
-  colorTemperature: number;
-  exposureMode: MeteringMode;
-  exposureCompensation: number;
-  iso: number;
-  redEyeReduction: boolean;
-  focusMode: MeteringMode;
-  pointsOfInterest: Point2D[];
-
-  brightness: number;
-  contrast: number;
-  saturation: number;
-  sharpness: number;
-  zoom: number;
+  fillLightMode: FillLightMode;
   imageHeight: number;
   imageWidth: number;
-  fillLightMode: FillLightMode;
+  redEyeReduction: boolean;
 }
 
 interface MediaSettingsRange {
   readonly max: number;
   readonly min: number;
-  readonly current: number;
   readonly step: number;
 }
 
+declare enum RedEyeReduction {
+  "never",
+  "always",
+  "controllable",
+}
+
 declare enum FillLightMode {
-  "unavailable",
   "auto",
   "off",
   "flash",
-  "torch"
 }
+
+interface MediaTrackSupportedConstraints {
+  whiteBalanceMode: boolean;
+  exposureMode: boolean;
+  focusMode: boolean;
+  pointsOfInterest: boolean;
+
+  exposureCompensation: boolean;
+  colorTemperature: boolean;
+  iso: boolean;
+
+  brightness: boolean;
+  contrast: boolean;
+  saturation: boolean;
+  sharpness: boolean;
+  focusDistance: boolean;
+  zoom: boolean;
+  torch: boolean;
+}
+
+interface MediaTrackCapabilities {
+  whiteBalanceMode: string[];
+  exposureMode: string[];
+  focusMode: string[];
+
+  exposureCompensation: MediaSettingsRange;
+  colorTemperature: MediaSettingsRange;
+  iso: MediaSettingsRange;
+
+  brightness: MediaSettingsRange;
+  contrast: MediaSettingsRange;
+  saturation: MediaSettingsRange;
+  sharpness: MediaSettingsRange;
+
+  focusDistance: MediaSettingsRange;
+  zoom: MediaSettingsRange;
+
+  torch: boolean;
+}
+
+interface MediaTrackConstraintSet {
+  whiteBalanceMode?: ConstrainDOMString;
+  exposureMode?: ConstrainDOMString;
+  focusMode?: ConstrainDOMString;
+  pointsOfInterest?: ConstrainPoint2D;
+
+  exposureCompensation?: ConstrainDouble;
+  colorTemperature?: ConstrainDouble;
+  iso?: ConstrainDouble;
+
+  brightness?: ConstrainDouble;
+  contrast?: ConstrainDouble;
+  saturation?: ConstrainDouble;
+  sharpness?: ConstrainDouble;
+
+  focusDistance?: ConstrainDouble;
+  zoom?: ConstrainDouble;
+
+  torch?: ConstrainBoolean;
+}
+
+interface MediaTrackSettings {
+  whiteBalanceMode: string;
+  exposureMode: string;
+  focusMode: string;
+  pointsOfInterest: Point2D[];
+
+  exposureCompensation: number;
+  colorTemperature: number;
+  iso: number;
+
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  sharpness: number;
+
+  focusDistance: number;
+  zoom: number;
+
+  torch: boolean;
+}
+
+interface ConstrainPoint2DParameters {
+  exact: Point2D[];
+  ideal: Point2D[];
+}
+
+declare type ConstrainPoint2D = Point2D[] | ConstrainPoint2DParameters;
 
 declare enum MeteringMode {
   "none",

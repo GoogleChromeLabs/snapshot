@@ -34,6 +34,11 @@ export default class EditView extends View {
 
     for (const slider of [...this.viewElement.getElementsByTagName('input')]) {
       this.sliders.set(slider.id, slider);
+      slider.addEventListener('input', () => {
+        if (!this.animationFrame) {
+          this.animationFrame = requestAnimationFrame(() => this.draw());
+        }
+      });
     }
 
     this.imageShader = new ImageShader();
@@ -103,8 +108,8 @@ export default class EditView extends View {
       this.imageShader.setUniform(name, value);
     }
 
-    this.imageShader.render();
+    this.animationFrame = 0;
 
-    this.animationFrame = requestAnimationFrame(() => this.draw());
+    this.imageShader.render();
   }
 }
