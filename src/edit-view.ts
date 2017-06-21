@@ -11,8 +11,8 @@
   limitations under the License.
 */
 
-import db from './image-db';
 import fragmentShader from './filter-fragment-shader.glsl';
+import db from './image-db';
 import ImageShader from './image-shader';
 import router from './router';
 import View from './view';
@@ -59,7 +59,7 @@ export default class EditView extends View {
       URL.revokeObjectURL(this.imageElement.src);
       this.imageShader.setImage(this.imageElement);
       this.animationFrame = requestAnimationFrame(() => this.draw());
-    }
+    };
     db.retrieve(state.id).then((blob) => {
       this.imageElement.src = URL.createObjectURL(blob);
     });
@@ -86,7 +86,7 @@ export default class EditView extends View {
       slider.value = slider.defaultValue;
     }
     if (state.sliderValues) {
-      for (let [name, value] of state.sliderValues) {
+      for (const [name, value] of state.sliderValues) {
         if (this.sliders.has(name)) {
           this.sliders.get(name)!.value = String(value);
         }

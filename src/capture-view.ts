@@ -19,9 +19,9 @@ import ViewState from './view-state';
 const streamConstraints: MediaStreamConstraints = {
   audio: false,
   video: {
+    facingMode: 'user',
     height: {ideal: 1080},
     width: {ideal: 1920},
-    facingMode: 'user',
   },
 };
 
