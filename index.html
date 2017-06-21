@@ -18,9 +18,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#000000">
     <style>
-      html, body {
+      * {
         padding: 0;
         margin: 0;
+      }
+
+      html, body {
         height: 100%;
       }
 
@@ -28,12 +31,78 @@
         position: relative;
         width: 100%;
         overflow: hidden;
+        background-color: #353535;
       }
 
-      #capture-view video {
-        padding: 0;
-        margin: 0;
+      button {
+        margin: 5px;
+        border-radius: 18px;
+        width: 36px;
+        height: 36px;
+        background-color: rgba(255, 255, 255, 0);
+        overflow: hidden;
+        border: none;
+        color: white;
+        position: relative;
+      }
+
+      button.light {
+        color: black;
+        background-color: white;
+      }
+
+      button:hover, button:focus {
+        background-color: #535353;
+        outline: 0;
+      }
+
+      button.light:hover, button.light:focus {
+        background-color: #d0d0d0;
+        outline: 0;
+      }
+
+      button svg {
         position: absolute;
+        transform: translate(-50%, -50%);
+        left: 50%;
+        top: 50%;
+      }
+
+      .view-element {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        height: 100%;
+      }
+
+      svg {
+        fill: currentColor;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .left {
+        align-self: flex-start;
+      }
+
+      .right {
+        align-self: flex-end;
+      }
+
+      .bottom {
+        margin-top: auto;
+      }
+
+      .center {
+        align-self: center;
+      }
+
+      /* Capture */
+
+      #capture-view video {
+        position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -42,119 +111,133 @@
         width: auto;
         height: auto;
         overflow: hidden;
+        z-index: -1;
       }
 
       #capture-view video.mirror {
         transform: translate(-50%, -50%) scaleX(-1);
       }
 
-      #capture-view .button-ring {
-        position: absolute;
-        bottom: 100px;
-        left: 50%;
-        border-radius: 60px;
-        transform: translateX(-50%);
-        border: 20px solid rgba(255, 255, 255, 0.2);
-      }
-
       #capture-view #capture-button {
-        border-radius: 40px;
-        width: 80px;
-        height: 80px;
-        background-color: #ff8080;
-        border: 20px solid white;
-        overflow: hidden;
+        transform: scale(2, 2);
+        margin: 80px;
       }
 
-      button:focus {
-        box-shadow: 0 0 6px 6px blueviolet;
-        outline: 0;
+      /* Image view */
+
+      #image-view #output-image {
+        max-width: 90%;
+        max-height: 90%;
+        box-shadow: 1px 3px 10px black;
       }
 
       #image-view #output-image {
-        width: 100%;
+        position: relative;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
       }
 
       #image-view #image-edit-button {
         position: absolute;
         bottom: 100px;
         right: 100px;
-        border-radius: 25px;
-        width: 50px;
-        height: 50px;
-        background-color: white;
-        border: 2px solid black;
-        overflow: hidden;
       }
 
-      #edit-view, #edit-view #edit-dest {
-        height: 100%;
-      }
+      /* Edit */
 
       #edit-view canvas {
-        max-height: calc(100% - 120px);
-        max-width: calc(100% - 20px);
-        margin: 10px 0;
-        position: relative;
-        transform: translate(-50%);
-        left: 50%;
+        max-width: calc(100% - 40px);
+        max-height: calc(100% - 20px);
+        box-shadow: 1px 3px 10px black;
+        display: block;
+        margin: 0 auto;
+      }
+
+      #edit-view #edit-dest {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
       }
 
       #edit-view .bottom-ui {
         height: 100px;
-        margin: 0;
-        background-color: blue;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 1;
-      }
-
-      #edit-view .slider-panel {
-        display: none;
-      }
-
-      .view-element {
-        display: none;
+        min-height: 100px;
+        background-color: #282828;
+        box-shadow: inset 0px 1px 5px 0px black;
       }
     </style>
   </head>
   <body>
-    <div class="view-element" id="capture-view">
-      <video id="capture-preview"></video>
-      <div class="button-ring">
-        <button id="capture-button" aria-label="Take photo" autofocus tabindex="0"></button>
-      </div>
-    </div>
-
-    <div class="view-element" id="image-view">
-      <img id="output-image" />
-      <button id="image-edit-button">
-        <svg fill="#000000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+    <svg class="hidden">
+      <defs>
+        <g id="svg-edit">
           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
           <path d="M0 0h24v24H0z" fill="none"/>
+        </g>
+        <g id="svg-arrow-back">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </g>
+        <g id="svg-photo-camera">
+          <circle cx="12" cy="12" r="3.2"/>
+          <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+          <path d="M0 0h24v24H0z" fill="none"/>
+        </g>
+      </defs>
+    </svg>
+
+    <div class="view-element hidden" id="capture-view">
+      <div class="toolbar left">
+        <button id="edit-view-back" aria-label="Back" tabindex="0">
+          <svg height="24" viewBox="0 0 24 24" width="24">
+            <use href="#svg-arrow-back" />
+          </svg>
+        </button>
+      </div>
+      <div class="toolbar center bottom">
+        <button id="capture-button" class="light" aria-label="Take photo" autofocus tabindex="0">
+          <svg height="24" viewBox="0 0 24 24" width="24">
+            <use href="#svg-photo-camera" />
+          </svg>
+        </button>
+      </div>
+      <video id="capture-preview"></video>
+    </div>
+
+    <div class="view-element hidden" id="image-view">
+      <img id="output-image" />
+      <button id="image-edit-button">
+        <svg height="24" viewBox="0 0 24 24" width="24">
+          <use href="#svg-edit" />
         </svg>
       </button>
     </div>
 
-    <div class="view-element" id="edit-view">
+    <div class="view-element hidden" id="edit-view">
+      <div class="toolbar">
+        <button id="edit-view-back">
+          <svg height="24" viewBox="0 0 24 24" width="24">
+            <use href="#svg-arrow-back" />
+          </svg>
+        </button>
+      </div>
       <div id="edit-dest"></div>
-      <div class="bottom-ui">
+      <div class="bottom-ui bottom">
         <div class="slider-chooser"></div>
         <div class="slider-panel">
           <label for="saturation">Saturation <input id="saturation" type="range" min="0" max="100" /></label>
         </div>
-        <div class="slider-panel">
+        <div class="slider-panel hidden">
           <label for="warmth">Warmth <input id="warmth" type="range" min="-4" max="4" step="any" /></label>
         </div>
-        <div class="slider-panel">
+        <div class="slider-panel hidden">
           <label for="sharpen">Sharpen <input id="sharpen" type="range" min="0" max="100" value="0" /></label>
         </div>
-        <div class="slider-panel">
+        <div class="slider-panel hidden">
           <label for="brightness">Brightness <input id="brightness" type="range" min="0" max="100" /></label>
         </div>
-        <div class="slider-panel">
+        <div class="slider-panel hidden">
           <label for="contrast">Contrast <input id="contrast" type="range" min="0" max="100" /></label>
         </div>
       </div>

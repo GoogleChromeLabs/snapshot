@@ -22,11 +22,11 @@ export default class View {
   }
 
   show(): void {
-    this.viewElement.style.display = 'block';
+    this.viewElement.classList.remove('hidden');
   }
 
   hide(): void {
-    this.viewElement.style.display = 'none';
+    this.viewElement.classList.add('hidden');
   }
 
   getState(): ViewState {
