@@ -24,74 +24,9 @@ uniform float brightness;
 uniform float contrast;
 uniform float blur;
 uniform float vignette;
+uniform float grey;
 
-vec3 HSVFromRGB(vec3 rgb) {
-  float h;
-  float s;
-  float v;
-
-  float cmax = max(max(rgb.r, rgb.g), rgb.b);
-  float cmin = min(min(rgb.r, rgb.g), rgb.b);
-  float delta = cmax - cmin;
-
-  // H
-  if (delta == 0.0) {
-    h = 0.0;
-  } else if (cmax == rgb.r) {
-    float part = (rgb.g - rgb.b) / delta;
-    if (part > 6.0) {
-      part -= 6.0;
-    }
-    h = 60.0 * part;
-  } else if (cmax == rgb.g) {
-    h = 60.0 * (((rgb.b - rgb.r) / delta) + 2.0);
-  } else if (cmax == rgb.b) {
-    h = 60.0 * (((rgb.r - rgb.g) / delta) + 4.0);
-  }
-
-  // S
-  if (cmax == 0.0) {
-    s = 0.0;
-  } else {
-    s = delta / cmax;
-  }
-
-  // V
-  v = cmax;
-
-  return vec3(h, s, v);
-}
-
-vec3 RGBFromHSV(vec3 hsv) {
-  float c = hsv.y * hsv.z;
-  float a = hsv.x / 60.0;
-  if (a > 2.0) {
-    a -= 2.0;
-  }
-  if (a > 2.0) {
-    a -= 2.0;
-  }
-  float b = abs(a - 1.0);
-  float x = c * (1.0 - b);
-  vec3 m = vec3(hsv.z - c);
-
-  vec3 rgb;
-  if (hsv.x < 60.0) {
-    rgb = vec3(c, x, 0.0);
-  } else if (hsv.x < 120.0) {
-    rgb = vec3(x, c, 0.0);
-  } else if (hsv.x < 180.0) {
-    rgb = vec3(0.0, c, x);
-  } else if (hsv.x < 240.0) {
-    rgb = vec3(0.0, x, c);
-  } else if (hsv.x < 300.0) {
-    rgb = vec3(x, 0.0, c);
-  } else {
-    rgb = vec3(c, 0.0, x);
-  }
-
-  return rgb + m;
-}
+vec3 saturationVector = vec3(0.299, 0.587, 0.114);
 
 void main() {
   vec2 off = sourceSize * blur;
@@ -141,19 +76,22 @@ void main() {
 
   tex += (tex - blurred) * sharpen;
 
-  vec3 hsv = HSVFromRGB(tex.rgb);
-  hsv.y = hsv.y * saturation;
-  vec4 color = vec4(RGBFromHSV(hsv), tex.a);
+  vec3 desaturated = vec3(dot(saturationVector, tex.rgb));
+  vec3 mixed = mix(desaturated, tex.rgb, saturation);
+  vec4 color = vec4(mixed, 1.0);
   color.r += warmth;
   color.b -= warmth;
 
-  vec4 gray = vec4(0.5, 0.5, 0.5, 1);
+  // This is the dumbest naming ever
+  vec4 gray = vec4(grey, grey, grey, 1.0);
+
   color = mix(color * brightness, mix(gray, color, contrast), 0.5);
 
-  float dist = sqrt(pow(texCoords.x - 0.5, 2.0) + pow(texCoords.y - 0.5, 2.0));
-  dist = max(0.0, dist - 0.2);
+  float ratio = off.x / off.y;
+  float dist = sqrt(pow(texCoords.x - 0.5, 2.0) + pow(ratio * (texCoords.y - 0.5), 2.0));
+  float vigCurve = 1.5 * exp(-pow(dist, 2.0) / (2.0 * pow(-vignette, 2.0)));
 
-  color *= 1.0 - (dist * vignette);
+  color *= vigCurve;
 
   color.a = 1.0;
 
