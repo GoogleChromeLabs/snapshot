@@ -12,7 +12,7 @@
 */
 
 const FILES = [
-  '/dist/app.min.js',
+  '/app.min.js',
   '/index.html',
   '/manifest.json',
 ];

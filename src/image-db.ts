@@ -15,8 +15,8 @@ const DB_VERSION = 1;
 
 class ImageDB {
   private dbPromise: Promise<IDBDatabase>;
-  private dbResolve: Function;
-  private dbReject: Function;
+  private dbResolve: (value: IDBDatabase) => void;
+  private dbReject: (reason: any) => void;
 
   constructor() {
     const request = indexedDB.open('image-db', DB_VERSION);

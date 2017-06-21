@@ -1,8 +1,8 @@
 {
   "name": "Snapshot",
   "short_name": "Snapshot",
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#353535",
+  "background_color": "#353535",
   "icons": [{
     "src": "icons/icon-512.png",
     "type": "image/png",

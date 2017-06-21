@@ -16,7 +16,7 @@
     <title>Snapshot</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#353535">
     <style>
       * {
         padding: 0;
@@ -32,6 +32,7 @@
         width: 100%;
         overflow: hidden;
         background-color: #353535;
+        color: white;
       }
 
       button {
@@ -189,7 +190,7 @@
 
     <div class="view-element hidden" id="capture-view">
       <div class="toolbar left">
-        <button id="edit-view-back" aria-label="Back" tabindex="0">
+        <button id="capture-view-back" aria-label="Back" tabindex="0">
           <svg height="24" viewBox="0 0 24 24" width="24">
             <use href="#svg-arrow-back" />
           </svg>
@@ -247,6 +248,6 @@
       JavaScript isn't enabled, so I'm afraid this app does nothing.
     </noscript>
 
-    <script src="/dist/app.min.js"></script>
+    <script src="/app.min.js"></script>
   </body>
 </html>

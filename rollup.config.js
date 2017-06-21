@@ -50,7 +50,9 @@ export default {
     nodeResolve({jsnext: true}),
     commonjs(),
     babel(),
-    babili(),
+    babili({
+      comments: false,
+    }),
   ],
-  dest: 'dist/app.min.js',
+  dest: 'public/app.min.js',
 };
