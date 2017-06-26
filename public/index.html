@@ -35,7 +35,7 @@
         color: white;
       }
 
-      button {
+      button.dark, button.light {
         margin: 5px;
         border-radius: 18px;
         width: 36px;
@@ -52,7 +52,7 @@
         background-color: white;
       }
 
-      button:hover, button:focus {
+      button.dark:hover, button.dark:focus {
         background-color: #535353;
         outline: 0;
       }
@@ -119,9 +119,34 @@
         transform: translate(-50%, -50%) scaleX(-1);
       }
 
-      #capture-view #capture-button {
-        transform: scale(2, 2);
+      #capture-button-inner {
+        width: 64px;
+        height: 64px;
+        border-radius: 32px;
+        margin: 16px;
+        background-color: white;
+      }
+
+      #capture-button {
+        color: black;
+        background-color: white;
         margin: 80px;
+        width: 96px;
+        height: 96px;
+        border-radius: 48px;
+        background-color: rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        border: none;
+        position: relative;
+      }
+
+      #capture-button:focus, #capture-button:hover {
+        width: 106px;
+        height: 106px;
+        border: 5px #50E3C2 solid;
+        margin: 75px;
+        border-radius: 53px;
+        outline: 0;
       }
 
       /* Image view */
@@ -162,10 +187,35 @@
       }
 
       #edit-view .bottom-ui {
-        height: 150px;
-        min-height: 150px;
         background-color: #282828;
         box-shadow: inset 0px 1px 5px 0px black;
+      }
+
+      /* Sliders */
+
+      input[type=range] {
+        -webkit-appearance: none;
+        opacity: 0.7;
+        margin: 7px 0;
+        vertical-align: middle;
+      }
+      input[type=range]:focus {
+        opacity: 1.0;
+        outline: none;
+      }
+
+      input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 2px;
+        background: #50E3C2;
+      }
+      input[type=range]::-webkit-slider-thumb {
+        height: 13px;
+        width: 13px;
+        border-radius: 7px;
+        background: #50E3C2;
+        -webkit-appearance: none;
+        margin-top: -6px;
       }
     </style>
   </head>
@@ -190,17 +240,19 @@
 
     <div class="view-element hidden" id="capture-view">
       <div class="toolbar left">
-        <button id="capture-view-back" aria-label="Back" tabindex="0">
+        <button class="dark" id="capture-view-back" aria-label="Back" tabindex="0">
           <svg height="24" viewBox="0 0 24 24" width="24">
             <use href="#svg-arrow-back" />
           </svg>
         </button>
       </div>
       <div class="toolbar center bottom">
-        <button id="capture-button" class="light" aria-label="Take photo" autofocus tabindex="0">
-          <svg height="24" viewBox="0 0 24 24" width="24">
-            <use href="#svg-photo-camera" />
-          </svg>
+        <button id="capture-button" aria-label="Take photo" autofocus tabindex="0">
+          <div id="capture-button-inner">
+            <svg height="24" viewBox="0 0 24 24" width="24">
+              <use href="#svg-photo-camera" />
+            </svg>
+          </div>
         </button>
       </div>
       <video id="capture-preview"></video>
@@ -208,7 +260,7 @@
 
     <div class="view-element hidden" id="image-view">
       <img id="output-image" />
-      <button id="image-edit-button">
+      <button class="dark" id="image-edit-button">
         <svg height="24" viewBox="0 0 24 24" width="24">
           <use href="#svg-edit" />
         </svg>
@@ -217,7 +269,7 @@
 
     <div class="view-element hidden" id="edit-view">
       <div class="toolbar">
-        <button id="edit-view-back">
+        <button class="dark" id="edit-view-back">
           <svg height="24" viewBox="0 0 24 24" width="24">
             <use href="#svg-arrow-back" />
           </svg>
