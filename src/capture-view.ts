@@ -29,14 +29,17 @@ const streamConstraints: MediaStreamConstraints = {
 export default class CaptureView extends View {
   private videoElement: HTMLVideoElement;
   private buttonElement: HTMLButtonElement;
+  private closeButton: HTMLButtonElement;
   private capture: ImageCapture | null;
 
   constructor() {
     super(document.getElementById('capture-view')!);
     this.videoElement = this.viewElement.querySelector('video#capture-preview')! as HTMLVideoElement;
     this.buttonElement = document.getElementById('capture-button')! as HTMLButtonElement;
+    this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
 
     this.buttonElement.addEventListener('click', () => this.takePhoto());
+    this.closeButton.addEventListener('click', () => this.close());
   }
 
   show() {
@@ -93,6 +96,10 @@ export default class CaptureView extends View {
 
       canvas.toBlob((blob: Blob) => this.storeResult(blob), 'image/jpg');
     }
+  }
+
+  close() {
+    router.visit(`/browse`);
   }
 
   private storeResult(blob: Blob) {
