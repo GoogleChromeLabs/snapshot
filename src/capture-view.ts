@@ -12,6 +12,7 @@
 */
 
 import db from './image-db';
+import ImageRecord from './image-record';
 import router from './router';
 import View from './view';
 import ViewState from './view-state';
@@ -82,9 +83,7 @@ export default class CaptureView extends View {
 
   takePhoto() {
     if (this.capture) {
-      this.capture.takePhoto().then((blob: Blob) => {
-        db.store(blob).then((id) => router.visit(`/image/${id}`));
-      });
+      this.capture.takePhoto().then((blob: Blob) => this.storeResult(blob));
     } else {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d')!;
@@ -92,13 +91,12 @@ export default class CaptureView extends View {
       canvas.height = this.videoElement.videoHeight;
       context.drawImage(this.videoElement, 0, 0);
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          db.store(blob).then((id) => router.visit(`/image/${id}`));
-        } else {
-          // TODO: something?
-        }
-      }, 'image/jpg');
+      canvas.toBlob((blob: Blob) => this.storeResult(blob), 'image/jpg');
     }
+  }
+
+  private storeResult(blob: Blob) {
+    const record = new ImageRecord(blob);
+    db.store(record).then((id) => router.visit(`/image/${id}`));
   }
 }

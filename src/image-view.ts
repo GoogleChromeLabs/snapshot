@@ -12,6 +12,7 @@
 */
 
 import db from './image-db';
+import ImageRecord from './image-record';
 import router from './router';
 import View from './view';
 import ViewState from './view-state';
@@ -35,7 +36,8 @@ export default class ImageView extends View {
       throw new Error(`Couldn't get id of image`);
     }
     this.imageElement.onload = () => URL.revokeObjectURL(this.imageElement.src);
-    db.retrieve(state.id).then((blob) => {
+    db.retrieve(state.id).then((record: ImageRecord) => {
+      const blob = record.edited || record.original;
       this.imageElement.src = URL.createObjectURL(blob);
     });
     super.show();
