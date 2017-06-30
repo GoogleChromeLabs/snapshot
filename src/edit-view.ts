@@ -13,6 +13,7 @@
 
 import fragmentShader from './filter-fragment-shader.glsl';
 import db from './image-db';
+import ImageRecord from './image-record';
 import ImageShader from './image-shader';
 import router from './router';
 import View from './view';
@@ -24,6 +25,7 @@ export default class EditView extends View {
   private sliders: Map<string, HTMLInputElement>;
   private animationFrame: number;
   private imageShader: ImageShader;
+  private currentRecord: ImageRecord;
 
   constructor() {
     super(document.getElementById('edit-view')!);
@@ -60,8 +62,9 @@ export default class EditView extends View {
       this.imageShader.setImage(this.imageElement);
       this.animationFrame = requestAnimationFrame(() => this.draw());
     };
-    db.retrieve(state.id).then((blob) => {
-      this.imageElement.src = URL.createObjectURL(blob);
+    db.retrieve(state.id).then((record: ImageRecord) => {
+      this.currentRecord = record;
+      this.imageElement.src = URL.createObjectURL(record.original);
     });
     super.show();
   }
@@ -111,5 +114,10 @@ export default class EditView extends View {
     this.animationFrame = 0;
 
     this.imageShader.render();
+
+    canvas.toBlob((blob: Blob) => {
+      this.currentRecord!.edited = blob;
+      db.store(this.currentRecord);
+    });
   }
 }

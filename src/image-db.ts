@@ -11,7 +11,9 @@
   limitations under the License.
 */
 
-const DB_VERSION = 1;
+import ImageRecord from './image-record';
+
+const DB_VERSION = 2;
 
 class ImageDB {
   private dbPromise: Promise<IDBDatabase>;
@@ -31,11 +33,15 @@ class ImageDB {
     });
   }
 
-  store(image: Blob): Promise<number> {
+  /**
+   * Store an image in the database. If the `id` property of the record is not
+   * set, this will create a new entry. Returns the ID of the record.
+   */
+  store(record: ImageRecord): Promise<number> {
     const promise = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
         const transaction = db.transaction(['images'], 'readwrite');
-        const put = transaction.objectStore('images').put(image);
+        const put = transaction.objectStore('images').put(record);
 
         put.onsuccess = (event) => resolve(put.result);
         put.onerror = reject;
@@ -45,7 +51,7 @@ class ImageDB {
     return promise;
   }
 
-  retrieve(id: number): Promise<Blob> {
+  retrieve(id: number): Promise<ImageRecord> {
     const promise = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
         const transaction = db.transaction(['images'], IDBTransaction.READ_ONLY);
@@ -53,6 +59,30 @@ class ImageDB {
 
         get.onsuccess = (event) => resolve(get.result);
         get.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  all(): Promise<ImageRecord[]> {
+    const promise = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['images'], IDBTransaction.READ_ONLY);
+        const open = transaction.objectStore('images').openCursor();
+        const results: ImageRecord[] = [];
+
+        open.onsuccess = (event) => {
+          const cursor = open.result as IDBCursorWithValue;
+
+          if (cursor) {
+            results.push(cursor.value);
+            cursor.continue();
+          } else {
+            resolve(results);
+          }
+        }
+        open.onerror = reject;
       }).catch(reject);
     });
 
@@ -70,8 +100,16 @@ class ImageDB {
     console.error(reason);
   }
 
-  private createObjectStore(event) {
-    event.target.result.createObjectStore('images', {autoIncrement: true});
+  private createObjectStore(event: IDBVersionChangeEvent) {
+    const request: IDBOpenDBRequest = event.target as IDBOpenDBRequest;
+    const db: IDBDatabase = request.result;
+
+    switch (event.oldVersion) {
+      case 1:
+        db.deleteObjectStore('images');
+      case 0:
+        db.createObjectStore('images', {keyPath: "id", autoIncrement: true});
+    }
   }
 }
 
