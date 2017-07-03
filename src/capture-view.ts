@@ -28,49 +28,34 @@ const streamConstraints: MediaStreamConstraints = {
 
 export default class CaptureView extends View {
   private videoElement: HTMLVideoElement;
-  private buttonElement: HTMLButtonElement;
+  private videoElement2: HTMLVideoElement;
+  private takePhotoButton: HTMLButtonElement;
   private closeButton: HTMLButtonElement;
   private capture: ImageCapture | null;
 
+  private devicesPromise: Promise<MediaDeviceInfo[]>;
+  private currentDevice: MediaDeviceInfo | null;
+
   constructor() {
     super(document.getElementById('capture-view')!);
-    this.videoElement = this.viewElement.querySelector('video#capture-preview')! as HTMLVideoElement;
-    this.buttonElement = document.getElementById('capture-button')! as HTMLButtonElement;
+    this.videoElement = this.viewElement.querySelector('video#preview')! as HTMLVideoElement;
+    this.videoElement2 = this.viewElement.querySelector('video#preview2')! as HTMLVideoElement;
+    this.takePhotoButton = document.getElementById('capture-button')! as HTMLButtonElement;
     this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
 
-    this.buttonElement.addEventListener('click', () => this.takePhoto());
+    this.videoElement2.classList.add('hidden');
+
+    this.takePhotoButton.addEventListener('click', () => this.takePhoto());
     this.closeButton.addEventListener('click', () => this.close());
+
+    this.devicesPromise = this.getDevices();
+    this.currentDevice = null;
   }
 
   show() {
-    navigator.mediaDevices.enumerateDevices().then((devices: MediaDeviceInfo[]) => {
-      devices = devices.filter((device) => device.kind === 'videoinput');
-
-      // TODO: navigator.mediaDevices.enumerateDevices() method, then
-      // set deviceId in getUserMedia() constraints to pick camera
-      navigator.mediaDevices.getUserMedia(streamConstraints).then((stream) => {
-        this.videoElement.srcObject = stream;
-        this.videoElement.onloadedmetadata = () => this.videoElement.play();
-
-        let mirror = false;
-
-        if ('ImageCapture' in window) {
-          const track = stream.getVideoTracks()[0];
-          const constraints = track.getConstraints();
-
-          if (constraints.facingMode === 'user') {
-            mirror = true;
-          }
-
-          this.capture = new ImageCapture(track);
-        }
-
-        if (mirror) {
-          this.videoElement.classList.add('mirror');
-        } else {
-          this.videoElement.classList.remove('mirror');
-        }
-      });
+    this.devicesPromise.then((devices) => {
+      this.currentDevice = devices[0];
+      this.startStream(devices[0].deviceId);
     });
     super.show();
   }
@@ -82,6 +67,13 @@ export default class CaptureView extends View {
     }
     this.videoElement.pause();
     super.hide();
+  }
+
+  async getDevices() {
+    let devices = await navigator.mediaDevices.enumerateDevices() as MediaDeviceInfo[];
+    devices = devices.filter((device) => device.kind === 'videoinput');
+
+    return devices;
   }
 
   takePhoto() {
@@ -105,5 +97,41 @@ export default class CaptureView extends View {
   private storeResult(blob: Blob) {
     const record = new ImageRecord(blob);
     db.store(record).then((id) => router.visit(`/image/${id}`));
+  }
+
+  private stopStream(stream: MediaStream) {
+    if (stream) {
+      for (const track of stream.getVideoTracks()) {
+        track.stop();
+      }
+    }
+  }
+
+  private startStream(deviceId) {
+    const current = this.videoElement.srcObject;
+    if (current) {
+      this.stopStream(current);
+    }
+
+    (streamConstraints.video as MediaTrackConstraints).deviceId = deviceId;
+
+    navigator.mediaDevices.getUserMedia(streamConstraints).then((stream) => {
+      this.videoElement2.srcObject = stream;
+      this.videoElement2.onloadedmetadata = () => {
+        const temp = this.videoElement;
+        this.videoElement = this.videoElement2;
+        this.videoElement2 = temp;
+        this.videoElement.play();
+        this.videoElement.classList.remove('hidden');
+        this.videoElement2.classList.add('hidden');
+        this.videoElement2.pause();
+      };
+
+      if ('ImageCapture' in window) {
+        const track = stream.getVideoTracks()[0];
+        this.capture = new ImageCapture(track);
+      }
+    });
+
   }
 }
