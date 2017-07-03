@@ -11,6 +11,7 @@
   limitations under the License.
 */
 
+import BrowseView from './browse-view';
 import CaptureView from './capture-view';
 import EditView from './edit-view';
 import ImageView from './image-view';
@@ -21,6 +22,7 @@ class Router {
   private currentView: View | null;
   private currentLocation: string;
 
+  private browseView: BrowseView;
   private captureView: CaptureView;
   private editView: EditView;
   private imageView: ImageView;
@@ -28,6 +30,7 @@ class Router {
   constructor() {
     window.addEventListener('popstate', (e) => this.changeHandler(e.state));
 
+    this.browseView = new BrowseView();
     this.captureView = new CaptureView();
     this.editView = new EditView();
     this.imageView = new ImageView();
@@ -59,6 +62,9 @@ class Router {
       case '':
       case 'capture':
         newView = this.captureView;
+        break;
+      case 'browse':
+        newView = this.browseView;
         break;
       case 'edit':
         newView = this.editView;

@@ -37,7 +37,7 @@
 
       button.dark, button.light {
         margin: 5px;
-        border-radius: 18px;
+        border-radius: 50%;
         width: 36px;
         height: 36px;
         background-color: rgba(255, 255, 255, 0);
@@ -78,6 +78,7 @@
 
       svg {
         fill: currentColor;
+        width: 24px;
       }
 
       .hidden {
@@ -98,6 +99,58 @@
 
       .center {
         align-self: center;
+      }
+
+      /* Browse */
+
+      #empty-browse-list {
+        color: #858585;
+        margin: auto;
+        text-align: center;
+      }
+
+      #empty-browse-list svg {
+        width: 192px;
+      }
+
+      #empty-browse-list .bigger {
+        color: #AEAEAE;
+        font-size: 25px;
+        font-weight: 500;
+      }
+
+      #empty-browse-list .smaller {
+        font-size: 14px;
+      }
+
+      #browse-list {
+        display: flex;
+        flex-wrap: wrap;
+        overflow-y: scroll;
+      }
+
+      #browse-list .element:before {
+        padding-top: 56.25%;
+        content: '';
+        display: block;
+      }
+
+      #browse-list .element {
+        width: 50%;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      #browse-capture-button {
+        border-radius: 50%;
+        width: 54px;
+        height: 54px;
+        margin: 25px;
+        background-color: #50E3C2;
+        position: absolute;
+        right: 0;
+        bottom: 0;
       }
 
       /* Capture */
@@ -122,7 +175,7 @@
       #capture-button-inner {
         width: 64px;
         height: 64px;
-        border-radius: 32px;
+        border-radius: 50%;
         margin: 16px;
         background-color: white;
       }
@@ -133,7 +186,7 @@
         margin: 80px;
         width: 96px;
         height: 96px;
-        border-radius: 48px;
+        border-radius: 50%;
         background-color: rgba(255, 255, 255, 0.3);
         overflow: hidden;
         border: none;
@@ -145,7 +198,7 @@
         height: 106px;
         border: 5px #50E3C2 solid;
         margin: 75px;
-        border-radius: 53px;
+        border-radius: 50%;
         outline: 0;
       }
 
@@ -212,7 +265,7 @@
       input[type=range]::-webkit-slider-thumb {
         height: 13px;
         width: 13px;
-        border-radius: 7px;
+        border-radius: 50%;
         background: #50E3C2;
         -webkit-appearance: none;
         margin-top: -6px;
@@ -235,14 +288,20 @@
           <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
           <path d="M0 0h24v24H0z" fill="none"/>
         </g>
+        <g id="svg-close">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          <path d="M0 0h24v24H0z" fill="none"/>
+        </g>
       </defs>
     </svg>
 
+    <!-- Capture -->
+
     <div class="view-element hidden" id="capture-view">
       <div class="toolbar left">
-        <button class="dark" id="capture-view-back" aria-label="Back" tabindex="0">
+        <button class="dark" id="capture-view-close" aria-label="Close" tabindex="0">
           <svg height="24" viewBox="0 0 24 24" width="24">
-            <use href="#svg-arrow-back" />
+            <use href="#svg-close" />
           </svg>
         </button>
       </div>
@@ -258,14 +317,38 @@
       <video id="capture-preview"></video>
     </div>
 
+    <!-- View -->
+
     <div class="view-element hidden" id="image-view">
       <img id="output-image" />
       <button class="dark" id="image-edit-button">
-        <svg height="24" viewBox="0 0 24 24" width="24">
+        <svg viewBox="0 0 24 24">
           <use href="#svg-edit" />
         </svg>
       </button>
     </div>
+
+    <!-- Browse -->
+
+    <div class="view-element hidden" id="browse-view">
+      <div id="empty-browse-list">
+        <svg viewBox="0 0 24 21">
+          <use href="#svg-photo-camera" />
+        </svg>
+        <div class="bigger">No photos</div>
+        <br />
+        <div class="smaller">(You should totally take one)</div>
+      </div>
+      <div id="browse-list">
+      </div>
+      <button class="light" id="browse-capture-button" aria-label="Take photo" autofocus tabindex="0">
+        <svg viewBox="0 0 24 24">
+          <use href="#svg-photo-camera" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Edit -->
 
     <div class="view-element hidden" id="edit-view">
       <div class="toolbar">
