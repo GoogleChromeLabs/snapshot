@@ -28,6 +28,7 @@
       }
 
       body {
+        font-family: Roboto;
         position: relative;
         width: 100%;
         overflow: hidden;
@@ -76,6 +77,14 @@
         height: 100%;
       }
 
+      .toolbar {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+      }
+
       svg {
         fill: currentColor;
         width: 24px;
@@ -85,12 +94,12 @@
         display: none;
       }
 
-      .left {
-        align-self: flex-start;
+      .toolbar.left {
+        justify-content: flex-start;
       }
 
-      .right {
-        align-self: flex-end;
+      .toolbar.right {
+        justify-content: flex-end;
       }
 
       .bottom {
@@ -98,7 +107,7 @@
       }
 
       .center {
-        align-self: center;
+        justify-content: center;
       }
 
       /* Browse */
@@ -157,11 +166,11 @@
 
       #capture-view video {
         position: fixed;
-        top: 50%;
+        top: 0;
         left: 50%;
-        transform: translate(-50%, -50%);
-        min-width: 100%;
-        min-height: 100%;
+        transform: translateX(-50%);
+        max-width: 100%;
+        max-height: 100%;
         width: auto;
         height: auto;
         overflow: hidden;
@@ -169,7 +178,7 @@
       }
 
       #capture-view video.mirror {
-        transform: translate(-50%, -50%) scaleX(-1);
+        transform: translateX(-50%) scaleX(-1);
       }
 
       #capture-button-inner {
@@ -182,8 +191,7 @@
 
       #capture-button {
         color: black;
-        background-color: white;
-        margin: 80px;
+        margin: 10px;
         width: 96px;
         height: 96px;
         border-radius: 50%;
@@ -197,7 +205,7 @@
         width: 106px;
         height: 106px;
         border: 5px #50E3C2 solid;
-        margin: 75px;
+        margin: 5px;
         border-radius: 50%;
         outline: 0;
       }
@@ -249,7 +257,7 @@
       input[type=range] {
         -webkit-appearance: none;
         opacity: 0.7;
-        margin: 7px 0;
+        margin: 14px 0;
         vertical-align: middle;
       }
       input[type=range]:focus {
@@ -259,16 +267,23 @@
 
       input[type=range]::-webkit-slider-runnable-track {
         width: 100%;
-        height: 2px;
+        height: 4px;
         background: #50E3C2;
       }
       input[type=range]::-webkit-slider-thumb {
-        height: 13px;
-        width: 13px;
+        height: 26px;
+        width: 26px;
         border-radius: 50%;
         background: #50E3C2;
         -webkit-appearance: none;
-        margin-top: -6px;
+        margin-top: -12px;
+      }
+
+      @font-face {
+        font-family: 'Roboto';
+        src: url(Roboto.woff2) format('woff2');
+        font-weight: normal;
+        font-style: normal;
       }
     </style>
   </head>
@@ -300,19 +315,21 @@
     <div class="view-element hidden" id="capture-view">
       <div class="toolbar left">
         <button class="dark" id="capture-view-close" aria-label="Close" tabindex="0">
-          <svg height="24" viewBox="0 0 24 24" width="24">
+          <svg viewBox="0 0 24 24">
             <use href="#svg-close" />
           </svg>
         </button>
       </div>
-      <div class="toolbar center bottom">
-        <button id="capture-button" aria-label="Take photo" autofocus tabindex="0">
-          <div id="capture-button-inner">
-            <svg height="24" viewBox="0 0 24 24" width="24">
-              <use href="#svg-photo-camera" />
-            </svg>
-          </div>
-        </button>
+      <div class="toolbar bottom">
+        <div>
+          <button id="capture-button" aria-label="Take photo" autofocus tabindex="0">
+            <div id="capture-button-inner">
+              <svg viewBox="0 0 24 24">
+                <use href="#svg-photo-camera" />
+              </svg>
+            </div>
+          </button>
+        </div>
       </div>
       <video id="capture-preview"></video>
     </div>
@@ -351,9 +368,9 @@
     <!-- Edit -->
 
     <div class="view-element hidden" id="edit-view">
-      <div class="toolbar">
+      <div class="toolbar left">
         <button class="dark" id="edit-view-back">
-          <svg height="24" viewBox="0 0 24 24" width="24">
+          <svg viewBox="0 0 24 24">
             <use href="#svg-arrow-back" />
           </svg>
         </button>
@@ -383,7 +400,7 @@
           <label for="vignette">Vignette <input id="vignette" type="range" min="10" max="100" value="100"/></label>
         </div>
         <div class="slider-panel">
-          <label for="grey">Grey <input id="grey" type="range" min="0" max="50" value="0.5" step="any"/></label>
+          <label for="grey">Grey <input id="grey" type="range" min="0" max="50" value="25" step="any"/></label>
         </div>
       </div>
     </div>
