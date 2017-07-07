@@ -20,7 +20,8 @@ import ViewState from './view-state';
 const streamConstraints: MediaStreamConstraints = {
   audio: false,
   video: {
-    facingMode: 'user',
+    deviceId: '',
+    facingMode: ['user', 'environment'],
     height: {ideal: 1080},
     width: {ideal: 1920},
   },
@@ -30,6 +31,8 @@ export default class CaptureView extends View {
   private videoElement: HTMLVideoElement;
   private videoElement2: HTMLVideoElement;
   private takePhotoButton: HTMLButtonElement;
+  private cameraChooseButton: HTMLButtonElement;
+  private mirrorButton: HTMLButtonElement;
   private closeButton: HTMLButtonElement;
   private capture: ImageCapture | null;
 
@@ -41,11 +44,15 @@ export default class CaptureView extends View {
     this.videoElement = this.viewElement.querySelector('video#preview')! as HTMLVideoElement;
     this.videoElement2 = this.viewElement.querySelector('video#preview2')! as HTMLVideoElement;
     this.takePhotoButton = document.getElementById('capture-button')! as HTMLButtonElement;
+    this.cameraChooseButton = document.getElementById('camera-choose-button')! as HTMLButtonElement;
+    this.mirrorButton = document.getElementById('capture-mirror-button')! as HTMLButtonElement;
     this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
 
     this.videoElement2.classList.add('hidden');
 
     this.takePhotoButton.addEventListener('click', () => this.takePhoto());
+    this.cameraChooseButton.addEventListener('click', () => this.toggleCameraChooser());
+    this.mirrorButton.addEventListener('click', () => this.toggleMirror());
     this.closeButton.addEventListener('click', () => this.close());
 
     this.devicesPromise = this.getDevices();
@@ -73,6 +80,12 @@ export default class CaptureView extends View {
     let devices = await navigator.mediaDevices.enumerateDevices() as MediaDeviceInfo[];
     devices = devices.filter((device) => device.kind === 'videoinput');
 
+    if (devices.length < 2) {
+      this.cameraChooseButton.classList.add('hidden');
+    } else {
+      this.cameraChooseButton.classList.remove('hidden');
+    }
+
     return devices;
   }
 
@@ -88,6 +101,32 @@ export default class CaptureView extends View {
 
       canvas.toBlob((blob: Blob) => this.storeResult(blob), 'image/jpg');
     }
+  }
+
+  async toggleCameraChooser() {
+    // Four possible cases
+    // 1. No camera! This view shouldn't even come up, we need a fallback UI
+    // 2. One camera. Button should be hidden.
+    // 3. Two cameras. Clicking button is a simple toggle.
+    // 4. Three or more cameras. Present a chooser with the names and/or
+    //    features of the cameras.
+    // TODO: Need to change the button to reflect the kind of camera that will
+    // be selected.
+    const devices = await this.devicesPromise;
+    if (devices.length < 2) {
+      return;
+    }
+
+    if (this.currentDevice) {
+      const currentIndex = devices.indexOf(this.currentDevice);
+
+      // TODO: Should show chooser for many devices, not just cycle
+      this.currentDevice = devices[(currentIndex + 1) % devices.length];
+    } else {
+      this.currentDevice = devices[0];
+    }
+
+    this.startStream(this.currentDevice.deviceId);
   }
 
   close() {
@@ -132,6 +171,13 @@ export default class CaptureView extends View {
         this.capture = new ImageCapture(track);
       }
     });
+  }
 
+  private toggleMirror() {
+    if (this.videoElement.classList.contains('mirror')) {
+      this.videoElement.classList.remove('mirror');
+    } else {
+      this.videoElement.classList.add('mirror');
+    }
   }
 }
