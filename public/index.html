@@ -117,6 +117,19 @@
         justify-content: center;
       }
 
+      .contain-image {
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        overflow: hidden;
+        z-index: -1;
+      }
+
       /* Browse */
 
       #empty-browse-list {
@@ -169,19 +182,6 @@
       }
 
       /* Capture */
-
-      #capture-view video {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        max-width: 100%;
-        max-height: 100%;
-        width: auto;
-        height: auto;
-        overflow: hidden;
-        z-index: -1;
-      }
 
       #capture-view video.mirror {
         transform: translateX(-50%) scaleX(-1);
@@ -297,6 +297,14 @@
           <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
           <path d="M0 0h24v24H0z" fill="none"/>
         </g>
+        <g id="svg-camera-rear">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M10 20H5v2h5v2l3-3-3-3v2zm4 0v2h5v-2h-5zm3-20H7C5.9 0 5 .9 5 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zm-5 6c-1.11 0-2-.9-2-2s.89-2 1.99-2 2 .9 2 2C14 5.1 13.1 6 12 6z"/>
+        </g>
+        <g id="svg-camera-front">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M10 20H5v2h5v2l3-3-3-3v2zm4 0v2h5v-2h-5zM12 8c1.1 0 2-.9 2-2s-.9-2-2-2-1.99.9-1.99 2S10.9 8 12 8zm5-8H7C5.9 0 5 .9 5 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zM7 2h10v10.5c0-1.67-3.33-2.5-5-2.5s-5 .83-5 2.5V2z"/>
+        </g>
         <g id="svg-close">
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
           <path d="M0 0h24v24H0z" fill="none"/>
@@ -318,7 +326,7 @@
           </svg>
         </button>
       </div>
-      <div class="toolbar bottom">
+      <div class="toolbar bottom center">
         <div>
           <button id="capture-button" aria-label="Take photo" autofocus tabindex="0">
             <div id="capture-button-inner">
@@ -329,8 +337,22 @@
           </button>
         </div>
       </div>
-      <video id="preview"></video>
-      <video id="preview2"></video>
+
+      <div class="toolbar right">
+          <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" tabindex="0">
+            <svg viewBox="0 0 24 24">
+              <use href="#svg-camera-front" />
+            </svg>
+          </button>
+
+          <button class="dark" id="camera-choose-button" aria-label="Choose camera" tabindex="0">
+            <svg viewBox="0 0 24 24">
+              <use href="#svg-camera-rear" />
+            </svg>
+          </button>
+      </div>
+      <video id="preview" class="contain-image"></video>
+      <video id="preview2" class="contain-image"></video>
     </div>
 
     <!-- Upload -->
