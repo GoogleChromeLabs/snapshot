@@ -28,10 +28,10 @@ interface PhotoCapabilities {
 }
 
 interface PhotoSettings {
-  fillLightMode: FillLightMode;
-  imageHeight: number;
-  imageWidth: number;
-  redEyeReduction: boolean;
+  fillLightMode?: FillLightMode;
+  imageHeight?: number;
+  imageWidth?: number;
+  redEyeReduction?: boolean;
 }
 
 interface MediaSettingsRange {
@@ -40,55 +40,46 @@ interface MediaSettingsRange {
   readonly step: number;
 }
 
-declare enum RedEyeReduction {
-  "never",
-  "always",
-  "controllable",
-}
-
-declare enum FillLightMode {
-  "auto",
-  "off",
-  "flash",
-}
+declare type RedEyeReduction = "never" | "always" | "controllable";
+declare type FillLightMode = "auto" | "off" | "flash";
 
 interface MediaTrackSupportedConstraints {
-  whiteBalanceMode: boolean;
-  exposureMode: boolean;
-  focusMode: boolean;
-  pointsOfInterest: boolean;
+  whiteBalanceMode?: boolean;
+  exposureMode?: boolean;
+  focusMode?: boolean;
+  pointsOfInterest?: boolean;
 
-  exposureCompensation: boolean;
-  colorTemperature: boolean;
-  iso: boolean;
+  exposureCompensation?: boolean;
+  colorTemperature?: boolean;
+  iso?: boolean;
 
-  brightness: boolean;
-  contrast: boolean;
-  saturation: boolean;
-  sharpness: boolean;
-  focusDistance: boolean;
-  zoom: boolean;
-  torch: boolean;
+  brightness?: boolean;
+  contrast?: boolean;
+  saturation?: boolean;
+  sharpness?: boolean;
+  focusDistance?: boolean;
+  zoom?: boolean;
+  torch?: boolean;
 }
 
 interface MediaTrackCapabilities {
-  whiteBalanceMode: string[];
-  exposureMode: string[];
-  focusMode: string[];
+  whiteBalanceMode?: string[];
+  exposureMode?: string[];
+  focusMode?: string[];
 
-  exposureCompensation: MediaSettingsRange;
-  colorTemperature: MediaSettingsRange;
-  iso: MediaSettingsRange;
+  exposureCompensation?: MediaSettingsRange;
+  colorTemperature?: MediaSettingsRange;
+  iso?: MediaSettingsRange;
 
-  brightness: MediaSettingsRange;
-  contrast: MediaSettingsRange;
-  saturation: MediaSettingsRange;
-  sharpness: MediaSettingsRange;
+  brightness?: MediaSettingsRange;
+  contrast?: MediaSettingsRange;
+  saturation?: MediaSettingsRange;
+  sharpness?: MediaSettingsRange;
 
-  focusDistance: MediaSettingsRange;
-  zoom: MediaSettingsRange;
+  focusDistance?: MediaSettingsRange;
+  zoom?: MediaSettingsRange;
 
-  torch: boolean;
+  torch?: boolean;
 }
 
 interface MediaTrackConstraintSet {
@@ -113,24 +104,24 @@ interface MediaTrackConstraintSet {
 }
 
 interface MediaTrackSettings {
-  whiteBalanceMode: string;
-  exposureMode: string;
-  focusMode: string;
-  pointsOfInterest: Point2D[];
+  whiteBalanceMode?: string;
+  exposureMode?: string;
+  focusMode?: string;
+  pointsOfInterest?: Point2D[];
 
-  exposureCompensation: number;
-  colorTemperature: number;
-  iso: number;
+  exposureCompensation?: number;
+  colorTemperature?: number;
+  iso?: number;
 
-  brightness: number;
-  contrast: number;
-  saturation: number;
-  sharpness: number;
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  sharpness?: number;
 
-  focusDistance: number;
-  zoom: number;
+  focusDistance?: number;
+  zoom?: number;
 
-  torch: boolean;
+  torch?: boolean;
 }
 
 interface ConstrainPoint2DParameters {
@@ -140,12 +131,7 @@ interface ConstrainPoint2DParameters {
 
 declare type ConstrainPoint2D = Point2D[] | ConstrainPoint2DParameters;
 
-declare enum MeteringMode {
-  "none",
-  "manual",
-  "single-shot",
-  "continuous"
-}
+declare type MeteringMode = "none" | "manual" | "single-shot" | "continuous";
 
 interface Point2D {
   x: number;

@@ -20,12 +20,16 @@ import ViewState from './view-state';
 export default class ImageView extends View {
   private imageElement: HTMLImageElement;
   private editButton: HTMLButtonElement;
+  private backButton: HTMLButtonElement;
 
   constructor() {
     super(document.getElementById('image-view')!);
     this.imageElement = document.getElementById('output-image')! as HTMLImageElement;
     this.editButton = document.getElementById('image-edit-button')! as HTMLButtonElement;
+    this.backButton = document.getElementById('image-view-back')! as HTMLButtonElement;
+
     this.editButton.addEventListener('click', () => this.edit());
+    this.backButton.addEventListener('click', () => this.backClick());
   }
 
   show() {
@@ -52,5 +56,9 @@ export default class ImageView extends View {
     }
 
     router.visit(`/edit/${state.id}`);
+  }
+
+  private backClick() {
+    history.back();
   }
 }
