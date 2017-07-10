@@ -22,6 +22,7 @@ import ViewState from './view-state';
 export default class EditView extends View {
   private destElement: HTMLDivElement;
   private imageElement: HTMLImageElement;
+  private backButton: HTMLButtonElement;
   private sliders: Map<string, HTMLInputElement>;
   private animationFrame: number;
   private imageShader: ImageShader;
@@ -31,6 +32,9 @@ export default class EditView extends View {
     super(document.getElementById('edit-view')!);
 
     this.destElement = document.getElementById('edit-dest')! as HTMLDivElement;
+    this.backButton = document.getElementById('edit-view-back')! as HTMLButtonElement;
+
+    this.backButton.addEventListener('click', () => this.backClick());
 
     this.sliders = new Map();
 
@@ -119,5 +123,9 @@ export default class EditView extends View {
       this.currentRecord!.edited = blob;
       db.store(this.currentRecord);
     });
+  }
+
+  private backClick() {
+    history.back();
   }
 }

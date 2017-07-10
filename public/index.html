@@ -214,21 +214,9 @@
 
       #image-view #output-image {
         max-width: 90%;
-        max-height: 90%;
+        max-height: calc(90% - 32px);
         box-shadow: 1px 3px 10px black;
-      }
-
-      #image-view #output-image {
-        position: relative;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-      }
-
-      #image-view #image-edit-button {
-        position: absolute;
-        bottom: 100px;
-        right: 100px;
+        top: calc(32px + 5%);
       }
 
       /* Edit */
@@ -337,12 +325,21 @@
     <!-- View -->
 
     <div class="view-element hidden" id="image-view">
-      <img id="output-image" />
-      <button class="dark" id="image-edit-button">
-        <svg viewBox="0 0 24 24">
-          <use href="#svg-edit" />
-        </svg>
-      </button>
+      <div class="toolbar left">
+        <button class="dark" id="image-view-back">
+          <svg viewBox="0 0 24 24">
+            <use href="#svg-arrow-back" />
+          </svg>
+        </button>
+      </div>
+      <div class="toolbar bottom right">
+        <button class="dark" id="image-edit-button">
+          <svg viewBox="0 0 24 24">
+            <use href="#svg-edit" />
+          </svg>
+        </button>
+      </div>
+      <img id="output-image" class="contain-image"/>
     </div>
 
     <!-- Browse -->

@@ -15,6 +15,8 @@ const FILES = [
   '/app.min.js',
   '/index.html',
   '/manifest.json',
+  '/favicon.ico',
+  '/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -35,7 +37,18 @@ async function installHandler(event) {
   self.skipWaiting();
 }
 
+/**
+ * @param {Request} request
+ * @return {Response}
+ */
 async function fetchHandler(request) {
+  if (request.mode === 'navigate') {
+    const url = new URL(request.url);
+    if (url.origin === location.origin) {
+      request = new Request('/index.html');
+    }
+  }
+
   const cache = await caches.open('snapshot');
   const cacheResult = await cache.match(request);
 
