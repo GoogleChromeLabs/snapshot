@@ -102,6 +102,13 @@
         justify-content: flex-end;
       }
 
+      .toolbar.floating {
+        position: absolute;
+        margin: 5px;
+        bottom: 0;
+        right: 0;
+      }
+
       .bottom {
         margin-top: auto;
       }
@@ -151,15 +158,14 @@
         background-position: center;
       }
 
-      #browse-capture-button {
-        border-radius: 50%;
+      #browse-view button {
         width: 54px;
         height: 54px;
-        margin: 25px;
         background-color: #50E3C2;
-        position: absolute;
-        right: 0;
-        bottom: 0;
+      }
+
+      #browse-view button:focus, #browse-view button:hover {
+        background-color: white;
       }
 
       /* Capture */
@@ -307,6 +313,10 @@
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
           <path d="M0 0h24v24H0z" fill="none"/>
         </g>
+        <g id="svg-file-upload">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+        </g>
       </defs>
     </svg>
 
@@ -334,6 +344,21 @@
       <video id="capture-preview"></video>
     </div>
 
+    <!-- Upload -->
+
+    <div class="view-element hidden" id="upload-view">
+      <div class="toolbar left">
+        <button class="dark" id="upload-view-close" aria-label="Close" tabindex="0">
+          <svg viewBox="0 0 24 24">
+            <use href="#svg-close" />
+          </svg>
+        </button>
+      </div>
+      <div class="toolbar bottom">
+        <input type="file" id="upload-file-input" accept="image/*">
+      </div>
+    </div>
+
     <!-- View -->
 
     <div class="view-element hidden" id="image-view">
@@ -358,11 +383,18 @@
       </div>
       <div id="browse-list">
       </div>
-      <button class="light" id="browse-capture-button" aria-label="Take photo" autofocus tabindex="0">
-        <svg viewBox="0 0 24 24">
-          <use href="#svg-photo-camera" />
-        </svg>
-      </button>
+      <div class="toolbar bottom floating right">
+        <button class="light" id="browse-upload-button" aria-label="Upload photo" tabindex="0">
+          <svg viewBox="0 0 24 24">
+            <use href="#svg-file-upload" />
+          </svg>
+        </button>
+        <button class="light" id="browse-capture-button" aria-label="Take photo" tabindex="0">
+          <svg viewBox="0 0 24 24">
+            <use href="#svg-photo-camera" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Edit -->
