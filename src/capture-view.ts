@@ -135,7 +135,7 @@ export default class CaptureView extends View {
 
   private storeResult(blob: Blob) {
     const record = new ImageRecord(blob);
-    db.store(record).then((id) => router.visit(`/image/${id}`));
+    db.store(record).then((id) => router.visit(`/edit/${id}`));
   }
 
   private stopStream(stream: MediaStream) {

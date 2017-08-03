@@ -11,6 +11,8 @@
   limitations under the License.
 */
 
+const VERSION = 1;
+
 const FILES = [
   '/app.min.js',
   '/index.html',
