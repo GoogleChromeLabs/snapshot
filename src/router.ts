@@ -15,6 +15,7 @@ import BrowseView from './browse-view';
 import CaptureView from './capture-view';
 import EditView from './edit-view';
 import ImageView from './image-view';
+import UploadView from './upload-view';
 import View from './view';
 import ViewState from './view-state';
 
@@ -26,6 +27,7 @@ class Router {
   private captureView: CaptureView;
   private editView: EditView;
   private imageView: ImageView;
+  private uploadView: UploadView;
 
   constructor() {
     window.addEventListener('popstate', (e) => this.changeHandler(e.state));
@@ -34,6 +36,7 @@ class Router {
     this.captureView = new CaptureView();
     this.editView = new EditView();
     this.imageView = new ImageView();
+    this.uploadView = new UploadView();
   }
 
   changeHandler(state?: ViewState) {
@@ -73,6 +76,9 @@ class Router {
       case 'image':
         newView = this.imageView;
         state.id = Number(parts[2]);
+        break;
+      case 'upload':
+        newView = this.uploadView;
         break;
       default:
         // TODO: Proper 404

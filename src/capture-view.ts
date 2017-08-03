@@ -20,7 +20,8 @@ import ViewState from './view-state';
 const streamConstraints: MediaStreamConstraints = {
   audio: false,
   video: {
-    facingMode: 'user',
+    deviceId: '',
+    facingMode: ['user', 'environment'],
     height: {ideal: 1080},
     width: {ideal: 1920},
   },
@@ -28,49 +29,40 @@ const streamConstraints: MediaStreamConstraints = {
 
 export default class CaptureView extends View {
   private videoElement: HTMLVideoElement;
-  private buttonElement: HTMLButtonElement;
+  private videoElement2: HTMLVideoElement;
+  private takePhotoButton: HTMLButtonElement;
+  private cameraChooseButton: HTMLButtonElement;
+  private mirrorButton: HTMLButtonElement;
   private closeButton: HTMLButtonElement;
   private capture: ImageCapture | null;
 
+  private devicesPromise: Promise<MediaDeviceInfo[]>;
+  private currentDevice: MediaDeviceInfo | null;
+
   constructor() {
     super(document.getElementById('capture-view')!);
-    this.videoElement = this.viewElement.querySelector('video#capture-preview')! as HTMLVideoElement;
-    this.buttonElement = document.getElementById('capture-button')! as HTMLButtonElement;
+    this.videoElement = this.viewElement.querySelector('video#preview')! as HTMLVideoElement;
+    this.videoElement2 = this.viewElement.querySelector('video#preview2')! as HTMLVideoElement;
+    this.takePhotoButton = document.getElementById('capture-button')! as HTMLButtonElement;
+    this.cameraChooseButton = document.getElementById('camera-choose-button')! as HTMLButtonElement;
+    this.mirrorButton = document.getElementById('capture-mirror-button')! as HTMLButtonElement;
     this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
 
-    this.buttonElement.addEventListener('click', () => this.takePhoto());
+    this.videoElement2.classList.add('hidden');
+
+    this.takePhotoButton.addEventListener('click', () => this.takePhoto());
+    this.cameraChooseButton.addEventListener('click', () => this.toggleCameraChooser());
+    this.mirrorButton.addEventListener('click', () => this.toggleMirror());
     this.closeButton.addEventListener('click', () => this.close());
+
+    this.devicesPromise = this.getDevices();
+    this.currentDevice = null;
   }
 
   show() {
-    navigator.mediaDevices.enumerateDevices().then((devices: MediaDeviceInfo[]) => {
-      devices = devices.filter((device) => device.kind === 'videoinput');
-
-      // TODO: navigator.mediaDevices.enumerateDevices() method, then
-      // set deviceId in getUserMedia() constraints to pick camera
-      navigator.mediaDevices.getUserMedia(streamConstraints).then((stream) => {
-        this.videoElement.srcObject = stream;
-        this.videoElement.onloadedmetadata = () => this.videoElement.play();
-
-        let mirror = false;
-
-        if ('ImageCapture' in window) {
-          const track = stream.getVideoTracks()[0];
-          const constraints = track.getConstraints();
-
-          if (constraints.facingMode === 'user') {
-            mirror = true;
-          }
-
-          this.capture = new ImageCapture(track);
-        }
-
-        if (mirror) {
-          this.videoElement.classList.add('mirror');
-        } else {
-          this.videoElement.classList.remove('mirror');
-        }
-      });
+    this.devicesPromise.then((devices) => {
+      this.currentDevice = devices[0];
+      this.startStream(this.currentDevice.deviceId);
     });
     super.show();
   }
@@ -82,6 +74,19 @@ export default class CaptureView extends View {
     }
     this.videoElement.pause();
     super.hide();
+  }
+
+  async getDevices() {
+    let devices = await navigator.mediaDevices.enumerateDevices() as MediaDeviceInfo[];
+    devices = devices.filter((device) => device.kind === 'videoinput');
+
+    if (devices.length < 2) {
+      this.cameraChooseButton.classList.add('hidden');
+    } else {
+      this.cameraChooseButton.classList.remove('hidden');
+    }
+
+    return devices;
   }
 
   takePhoto() {
@@ -98,6 +103,32 @@ export default class CaptureView extends View {
     }
   }
 
+  async toggleCameraChooser() {
+    // Four possible cases
+    // 1. No camera! This view shouldn't even come up, we need a fallback UI
+    // 2. One camera. Button should be hidden.
+    // 3. Two cameras. Clicking button is a simple toggle.
+    // 4. Three or more cameras. Present a chooser with the names and/or
+    //    features of the cameras.
+    // TODO: Need to change the button to reflect the kind of camera that will
+    // be selected.
+    const devices = await this.devicesPromise;
+    if (devices.length < 2) {
+      return;
+    }
+
+    if (this.currentDevice) {
+      const currentIndex = devices.indexOf(this.currentDevice);
+
+      // TODO: Should show chooser for many devices, not just cycle
+      this.currentDevice = devices[(currentIndex + 1) % devices.length];
+    } else {
+      this.currentDevice = devices[0];
+    }
+
+    this.startStream(this.currentDevice.deviceId);
+  }
+
   close() {
     router.visit(`/browse`);
   }
@@ -105,5 +136,44 @@ export default class CaptureView extends View {
   private storeResult(blob: Blob) {
     const record = new ImageRecord(blob);
     db.store(record).then((id) => router.visit(`/image/${id}`));
+  }
+
+  private stopStream(stream: MediaStream) {
+    for (const track of stream.getVideoTracks()) {
+      track.stop();
+    }
+  }
+
+  private startStream(deviceId) {
+    const current = this.videoElement.srcObject;
+    if (current) {
+      this.stopStream(current);
+    }
+
+    (streamConstraints.video as MediaTrackConstraints).deviceId = deviceId;
+
+    navigator.mediaDevices.getUserMedia(streamConstraints).then((stream) => {
+      this.videoElement2.srcObject = stream;
+      this.videoElement2.onloadedmetadata = () => {
+        const temp = this.videoElement;
+        this.videoElement = this.videoElement2;
+        this.videoElement2 = temp;
+        this.videoElement.play();
+        this.videoElement.classList.remove('hidden');
+        this.videoElement2.classList.add('hidden');
+        this.videoElement2.pause();
+      };
+
+      if ('ImageCapture' in window) {
+        const track = stream.getVideoTracks()[0];
+        this.capture = new ImageCapture(track);
+      }
+    }).catch((reason) => {
+      // TODO: What to do if the user did not grant permission, etc?
+    });
+  }
+
+  private toggleMirror() {
+    this.videoElement.classList.toggle('mirror');
   }
 }

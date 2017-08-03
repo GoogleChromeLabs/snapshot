@@ -19,6 +19,7 @@ import ViewState from './view-state';
 
 export default class BrowseView extends View {
   private captureButton: HTMLButtonElement;
+  private uploadButton: HTMLButtonElement;
   private emptyListElement: HTMLElement;
   private listElement: HTMLElement;
   private blobURLs: Set<string>;
@@ -27,10 +28,12 @@ export default class BrowseView extends View {
     super(document.getElementById('browse-view')!);
 
     this.captureButton = document.getElementById('browse-capture-button') as HTMLButtonElement;
+    this.uploadButton = document.getElementById('browse-upload-button') as HTMLButtonElement;
     this.emptyListElement = document.getElementById('empty-browse-list') as HTMLButtonElement;
     this.listElement = document.getElementById('browse-list') as HTMLButtonElement;
 
-    this.captureButton.addEventListener('click', () => this.capture());
+    this.captureButton.addEventListener('click', () => this.captureClick());
+    this.uploadButton.addEventListener('click', () => this.uploadClick());
 
     this.blobURLs = new Set();
   }
@@ -74,7 +77,11 @@ export default class BrowseView extends View {
     this.blobURLs.clear();
   }
 
-  capture() {
+  captureClick() {
     router.visit('/capture');
+  }
+
+  uploadClick() {
+    router.visit('/upload');
   }
 }
