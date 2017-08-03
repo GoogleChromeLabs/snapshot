@@ -11,7 +11,9 @@
   limitations under the License.
 */
 
+import FilterTransform from './filter-transform';
+
 export default class ViewState {
   id?: number;
-  sliderValues?: Map<string, number>;
+  transform?: FilterTransform;
 }

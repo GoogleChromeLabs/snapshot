@@ -83,17 +83,15 @@ void main() {
   color.b -= warmth;
 
   // This is the dumbest naming ever
-  vec4 gray = vec4(grey, grey, grey, 1.0);
+  vec3 gray = vec3(grey, grey, grey);
 
-  color = mix(color * brightness, mix(gray, color, contrast), 0.5);
+  color.rgb = mix(color.rgb * brightness, mix(gray, color.rgb, contrast), 0.5);
 
   float ratio = off.x / off.y;
   float dist = sqrt(pow(texCoords.x - 0.5, 2.0) + pow(ratio * (texCoords.y - 0.5), 2.0));
   float vigCurve = exp(-pow(dist, 2.0) / (2.0 * pow(-vignette, 2.0)));
 
-  color *= vigCurve;
-
-  color.a = 1.0;
+  color.rgb *= vigCurve;
 
   gl_FragColor = color;
 }

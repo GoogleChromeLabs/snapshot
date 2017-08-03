@@ -75,6 +75,7 @@
         flex-direction: column;
         justify-content: flex-start;
         height: 100%;
+        overflow: hidden;
       }
 
       .toolbar {
@@ -83,6 +84,7 @@
         justify-content: space-around;
         align-items: center;
         width: 100%;
+        flex-shrink: 0;
       }
 
       svg {
@@ -247,7 +249,7 @@
 
       /* Edit */
 
-      #edit-view canvas {
+      #edit-dest canvas {
         max-width: calc(100% - 40px);
         max-height: calc(100% - 20px);
         box-shadow: 1px 3px 10px black;
@@ -255,8 +257,9 @@
         margin: 0 auto;
       }
 
-      #edit-view #edit-dest {
+      #edit-dest {
         width: 100%;
+        height: 100%;
         overflow: hidden;
       }
 
@@ -265,14 +268,62 @@
         box-shadow: inset 0px 1px 5px 0px black;
         display: flex;
         flex-direction: row;
+        flex-shrink: 0;
+        position: relative;
+        height: 100px;
+      }
+
+      #edit-view .filter-thumbnail {
+        display: block;
+        margin: 0 auto;
+        width: auto;
+        height: 100%;
+      }
+
+      .filter-button {
+        flex-shrink: 0;
+        border: 0;
+        outline: 0;
+        height: 100%;
+        background: none;
+      }
+
+      .edit-toolbar-section {
+        display: flex;
+        transform: translateY(100%);
+        transition: transform 0.2s, opacity 0.4s, visibility 0.8s;
+        position: absolute;
+        left: 46px;
+        right: 0;
+        overflow-x: auto;
+        visibility: hidden;
+        opacity: 0;
+        height: 100%;
+      }
+
+      .edit-toolbar-section.selected {
+        transform: translateY(0);
+        visibility: initial;
+        opacity: 1;
+      }
+
+      .edit-select-button.selected {
+        display: none;
+      }
+
+      #edit-section-toggle {
+        margin: auto auto auto 0;
+      }
+
+      .effect-button-container {
+        margin: auto;
       }
 
       .slider-panel {
-        position: fixed;
-        bottom: 50px;
+        position: absolute;
+        bottom: 120px;
         padding: 10px;
         background-color: #353535;
-        /* border: 1px solid #50E3C2; */
         left: 50%;
         transform: translateX(-50%);
       }
@@ -306,7 +357,9 @@
 
       @font-face {
         font-family: 'Roboto';
-        src: url(/Roboto.woff2) format('woff2');
+        src:
+          local('Roboto'),
+          url(/Roboto.woff2) format('woff2');
         font-weight: normal;
         font-style: normal;
       }
@@ -377,6 +430,22 @@
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z"/>
         </g>
+        <g id="svg-flip">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M15 21h2v-2h-2v2zm4-12h2V7h-2v2zM3 5v14c0 1.1.9 2 2 2h4v-2H5V5h4V3H5c-1.1 0-2 .9-2 2zm16-2v2h2c0-1.1-.9-2-2-2zm-8 20h2V1h-2v22zm8-6h2v-2h-2v2zM15 5h2V3h-2v2zm4 8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2z"/>
+        </g>
+        <g id="svg-photo-filter">
+          <path d="M0 0h24v24H0V0z" fill="none"/>
+          <path d="M19.02 10v9H5V5h9V3H5.02c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-9h-2zM17 10l.94-2.06L20 7l-2.06-.94L17 4l-.94 2.06L14 7l2.06.94zm-3.75.75L12 8l-1.25 2.75L8 12l2.75 1.25L12 16l1.25-2.75L16 12z"/>
+        </g>
+        <g id="svg-tune">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+        </g>
+        <g id="svg-check">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </g>
       </defs>
     </svg>
 
@@ -386,7 +455,7 @@
       <div class="toolbar left">
         <button class="dark" id="capture-view-close" aria-label="Close" tabindex="0">
           <svg viewBox="0 0 24 24">
-            <use href="#svg-close" />
+            <use xlink:href="#svg-close"/>
           </svg>
         </button>
       </div>
@@ -395,7 +464,7 @@
           <button id="capture-button" aria-label="Take photo" autofocus tabindex="0">
             <div id="capture-button-inner">
               <svg viewBox="0 0 24 24">
-                <use href="#svg-photo-camera" />
+                <use xlink:href="#svg-photo-camera">
               </svg>
             </div>
           </button>
@@ -405,18 +474,18 @@
       <div class="toolbar right">
           <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" tabindex="0">
             <svg viewBox="0 0 24 24">
-              <use href="#svg-camera-front" />
+              <use xlink:href="#svg-flip">
             </svg>
           </button>
 
           <button class="dark" id="camera-choose-button" aria-label="Choose camera" tabindex="0">
             <svg viewBox="0 0 24 24">
-              <use href="#svg-camera-rear" />
+              <use xlink:href="#svg-camera-rear">
             </svg>
           </button>
       </div>
-      <video id="preview" class="contain-image"></video>
-      <video id="preview2" class="contain-image"></video>
+      <video id="preview" muted playsinline class="contain-image"></video>
+      <video id="preview2" muted playsinline class="contain-image"></video>
     </div>
 
     <!-- Upload -->
@@ -426,14 +495,14 @@
       <div class="toolbar left">
         <button class="dark" id="upload-view-close" aria-label="Close" tabindex="0">
           <svg viewBox="0 0 24 24">
-            <use href="#svg-close" />
+            <use xlink:href="#svg-close">
           </svg>
         </button>
       </div>
       <div class="toolbar">
         <button id="upload-button">
           <svg viewBox="0 0 24 24">
-            <use href="#svg-file-upload" />
+            <use xlink:href="#svg-file-upload">
           </svg>
           Upload an image
         </button>
@@ -449,7 +518,7 @@
     <div class="view-element hidden" id="browse-view">
       <div id="empty-browse-list">
         <svg viewBox="0 0 24 21">
-          <use href="#svg-photo-camera" />
+          <use xlink:href="#svg-photo-camera">
         </svg>
         <div class="bigger">No photos</div>
         <br />
@@ -460,12 +529,12 @@
       <div class="toolbar bottom floating right">
         <button class="light" id="browse-upload-button" aria-label="Upload photo" tabindex="0">
           <svg viewBox="0 0 24 24">
-            <use href="#svg-add-a-photo" />
+            <use xlink:href="#svg-add-a-photo">
           </svg>
         </button>
         <button class="light" id="browse-capture-button" aria-label="Take photo" tabindex="0">
           <svg viewBox="0 0 24 24">
-            <use href="#svg-photo-camera" />
+            <use xlink:href="#svg-photo-camera">
           </svg>
         </button>
       </div>
@@ -477,81 +546,98 @@
       <div class="toolbar left">
         <button class="dark" id="edit-view-close">
           <svg viewBox="0 0 24 24">
-            <use href="#svg-close" />
+            <use xlink:href="#svg-close">
+          </svg>
+        </button>
+        <button class="dark" id="edit-view-accept">
+          <svg viewBox="0 0 24 24">
+            <use xlink:href="#svg-check">
           </svg>
         </button>
       </div>
       <div id="edit-dest"></div>
 
+      <!-- Sliders -->
+      <div>
+        <div class="slider-panel hidden" id="effect-button-saturation-panel">
+          <label for="saturation">Saturation<br /><input id="saturation" type="range" min="0" max="100" /></label>
+        </div>
+        <div class="slider-panel hidden" id="effect-button-warmth-panel">
+          <label for="warmth">Warmth<br /><input id="warmth" type="range" min="-4" max="4" step="any" /></label>
+        </div>
+        <div class="slider-panel hidden" id="effect-button-sharpen-panel">
+          <label for="sharpen">Sharpen<br /><input id="sharpen" type="range" min="-100" max="100" value="0" /></label>
+          <br />
+          <label for="blur">Distance<br /><input id="blur" type="range" min="1" max="200" value="50"/></label>
+        </div>
+        <div class="slider-panel hidden" id="effect-button-brightness-panel">
+          <label for="brightness">Brightness<br /><input id="brightness" type="range" min="0" max="100" /></label>
+        </div>
+        <div class="slider-panel hidden" id="effect-button-contrast-panel">
+          <label for="contrast">Contrast<br /><input id="contrast" type="range" min="0" max="100" /></label>
+          <br />
+          <label for="grey">Grey Point<br /><input id="grey" type="range" min="0" max="50" value="25" step="any"/></label>
+        </div>
+        <div class="slider-panel hidden" id="effect-button-vignette-panel">
+          <label for="vignette">Vignette<br /><input id="vignette" type="range" min="10" max="100" value="100"/></label>
+        </div>
+      </div>
+
       <div class="bottom-ui bottom center">
-        <div id="edit-saturation">
-          <div class="slider-panel hidden">
-            <label for="saturation">Saturation<br /><input id="saturation" type="range" min="0" max="100" /></label>
-          </div>
-          <button class="effect-button dark" id="effect-button-saturation" aria-label="Saturation" tabindex="0">
+        <div id="edit-section-toggle">
+          <button id="edit-select-filters" class="dark edit-select-button selected" aria-label="Filters" tabindex="0">
             <svg viewBox="0 0 24 24">
-              <use href="#svg-palette" />
+              <use xlink:href="#svg-photo-filter">
+            </svg>
+          </button>
+          <button id="edit-select-tuning" class="dark edit-select-button" aria-label="Tuning" tabindex="0">
+            <svg viewBox="0 0 24 24">
+              <use xlink:href="#svg-tune">
             </svg>
           </button>
         </div>
 
-        <div id="edit-warmth">
-          <div class="slider-panel hidden">
-            <label for="warmth">Warmth<br /><input id="warmth" type="range" min="-4" max="4" step="any" /></label>
-          </div>
-          <button class="effect-button dark" id="effect-button-warmth" aria-label="Warmth" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use href="#svg-wb-cloudy" />
-            </svg>
-          </button>
+        <div id="edit-filter" class="edit-toolbar-section selected">
         </div>
 
-        <div id="edit-sharpen">
-          <div class="slider-panel hidden">
-            <label for="sharpen">Sharpen<br /><input id="sharpen" type="range" min="-100" max="100" value="0" /></label>
-            <br />
-            <label for="blur">Distance<br /><input id="blur" type="range" min="1" max="200" value="50"/></label>
-          </div>
-          <button class="effect-button dark" id="effect-button-sharpen" aria-label="Sharpen" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use href="#svg-blur-on" />
-            </svg>
-          </button>
-        </div>
+        <div id="edit-tune" class="edit-toolbar-section">
+          <div class="effect-button-container">
+            <button class="effect-button dark" id="effect-button-saturation" aria-label="Saturation" tabindex="0">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-palette">
+              </svg>
+            </button>
 
-        <div id="edit-brightness">
-          <div class="slider-panel hidden">
-            <label for="brightness">Brightness<br /><input id="brightness" type="range" min="0" max="100" /></label>
-          </div>
-          <button class="effect-button dark" id="effect-button-brightness" aria-label="Brightness" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use href="#svg-brightness-6" />
-            </svg>
-          </button>
-        </div>
+            <button class="effect-button dark" id="effect-button-warmth" aria-label="Warmth" tabindex="0">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-wb-cloudy">
+              </svg>
+            </button>
 
-        <div id="edit-contrast">
-          <div class="slider-panel hidden">
-            <label for="contrast">Contrast<br /><input id="contrast" type="range" min="0" max="100" /></label>
-            <br />
-            <label for="grey">Grey Point<br /><input id="grey" type="range" min="0" max="50" value="25" step="any"/></label>
-          </div>
-          <button class="effect-button dark" id="effect-button-contrast" aria-label="Contrast" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use href="#svg-exposure" />
-            </svg>
-          </button>
-        </div>
+            <button class="effect-button dark" id="effect-button-sharpen" aria-label="Sharpen" tabindex="0">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-blur-on">
+              </svg>
+            </button>
 
-        <div id="edit-vignette">
-          <div class="slider-panel hidden">
-            <label for="vignette">Vignette<br /><input id="vignette" type="range" min="10" max="100" value="100"/></label>
+            <button class="effect-button dark" id="effect-button-brightness" aria-label="Brightness" tabindex="0">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-brightness-6">
+              </svg>
+            </button>
+
+            <button class="effect-button dark" id="effect-button-contrast" aria-label="Contrast" tabindex="0">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-exposure">
+              </svg>
+            </button>
+
+            <button class="effect-button dark" id="effect-button-vignette" aria-label="Vignette" tabindex="0">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-vignette">
+              </svg>
+            </button>
           </div>
-          <button class="effect-button dark" id="effect-button-vignette" aria-label="Vignette" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use href="#svg-vignette" />
-            </svg>
-          </button>
         </div>
       </div>
     </div>

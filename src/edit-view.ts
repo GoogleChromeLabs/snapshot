@@ -12,9 +12,11 @@
 */
 
 import fragmentShader from './filter-fragment-shader.glsl';
+import FilterTransform from './filter-transform';
 import db from './image-db';
 import ImageRecord from './image-record';
 import ImageShader from './image-shader';
+import {NamedFilter, namedFilters} from './named-filter';
 import router from './router';
 import View from './view';
 import ViewState from './view-state';
@@ -23,31 +25,65 @@ export default class EditView extends View {
   private destElement: HTMLDivElement;
   private imageElement: HTMLImageElement;
   private closeButton: HTMLButtonElement;
+  private acceptButton: HTMLButtonElement;
   private sliders: Map<string, HTMLInputElement>;
   private effectButtons: Set<HTMLButtonElement>;
+  private filterSectionButton: HTMLButtonElement;
+  private tuneSectionButton: HTMLButtonElement;
+  private filterSection: HTMLDivElement;
+  private tuneSection: HTMLDivElement;
   private animationFrame: number;
   private imageShader: ImageShader;
   private currentRecord: ImageRecord | null;
   private currentPanel: Element | null;
-  private pendingSave: boolean;
+  private transform: FilterTransform;
 
   constructor() {
     super(document.getElementById('edit-view')!);
 
     this.destElement = document.getElementById('edit-dest')! as HTMLDivElement;
     this.closeButton = document.getElementById('edit-view-close')! as HTMLButtonElement;
+    this.acceptButton = document.getElementById('edit-view-accept')! as HTMLButtonElement;
+    this.filterSectionButton = document.getElementById('edit-select-filters')! as HTMLButtonElement;
+    this.tuneSectionButton = document.getElementById('edit-select-tuning')! as HTMLButtonElement;
+    this.filterSection = document.getElementById('edit-filter')! as HTMLDivElement;
+    this.tuneSection = document.getElementById('edit-tune')! as HTMLDivElement;
 
     this.closeButton.addEventListener('click', () => this.closeClick());
+    this.acceptButton.addEventListener('click', () => this.acceptClick());
+    this.filterSectionButton.addEventListener('click', () => this.toggleSection());
+    this.tuneSectionButton.addEventListener('click', () => this.toggleSection());
+
+    this.transform = new FilterTransform();
 
     this.sliders = new Map();
 
     for (const slider of [...this.viewElement.getElementsByTagName('input')]) {
       this.sliders.set(slider.id, slider);
+
       slider.addEventListener('input', () => {
+        this.transform[slider.id] = Number(slider.value) / 50;
         if (!this.animationFrame) {
           this.animationFrame = requestAnimationFrame(() => this.draw());
         }
       });
+    }
+
+    for (const filter of namedFilters) {
+      filter.values.randomize();
+
+      const button = document.createElement('button');
+      button.classList.add('filter-button');
+      button.id = `filter-button-${filter.name.toLowerCase()}`;
+      button.setAttribute('aria-label', filter.name);
+      button.tabIndex = 0;
+      button.addEventListener('click', () => this.filterButtonClick(filter));
+
+      const canvas = document.createElement('canvas');
+      canvas.classList.add('filter-thumbnail');
+      button.appendChild(canvas);
+
+      this.filterSection.appendChild(button);
     }
 
     this.effectButtons = new Set(this.viewElement.querySelectorAll("button.effect-button")) as Set<HTMLButtonElement>;
@@ -62,11 +98,12 @@ export default class EditView extends View {
 
     this.currentPanel = null;
     this.currentRecord = null;
-    this.pendingSave = false;
   }
 
   show() {
     const state = this.getState();
+
+    this.setTransform(state.transform || new FilterTransform());
 
     if (!state.id) {
       // TODO: Better handling of errors?
@@ -78,9 +115,53 @@ export default class EditView extends View {
       URL.revokeObjectURL(this.imageElement.src);
       this.imageShader.setImage(this.imageElement);
       this.animationFrame = requestAnimationFrame(() => this.draw());
+
+      const aspectRatio = this.imageElement.naturalWidth / this.imageElement.naturalHeight;
+
+      const thumbnail = document.createElement('canvas');
+      thumbnail.height = 100 * devicePixelRatio;
+      thumbnail.width = thumbnail.height * aspectRatio;
+      thumbnail.getContext('2d')!.drawImage(this.imageElement, 0, 0, thumbnail.width, thumbnail.height);
+      const thumbShader = new ImageShader();
+      thumbShader.setFragmentShader(fragmentShader);
+      thumbShader.setImage(thumbnail);
+
+      const relativeSize = thumbnail.height / this.imageElement.naturalHeight;
+
+      for (const filter of namedFilters) {
+        const output =
+          document.querySelector(`#filter-button-${filter.name.toLowerCase()} .filter-thumbnail`) as HTMLCanvasElement;
+        if (!output) {
+          console.error(`No output thumbnail for filter ${filter.name}`);
+        } else {
+          setTimeout(() => {
+            output.width = thumbnail.width;
+            output.height = thumbnail.height;
+            const context = output.getContext('2d') as CanvasRenderingContext2D;
+            thumbShader.setUniform('sourceSize', new Float32Array([1 / thumbnail.width, 1 / thumbnail.height]));
+
+            const transform = filter.values;
+            // Reduce the blur value relative to the size of the thumbnail
+            thumbShader.setUniform('blur', relativeSize * transform.blur);
+            thumbShader.setUniform('brightness', transform.brightness);
+            thumbShader.setUniform('contrast', transform.contrast);
+            thumbShader.setUniform('grey', transform.grey);
+            thumbShader.setUniform('saturation', transform.saturation);
+            thumbShader.setUniform('sharpen', transform.sharpen);
+            thumbShader.setUniform('vignette', transform.vignette);
+            thumbShader.setUniform('warmth', transform.warmth);
+            thumbShader.render();
+            context.drawImage(
+              thumbShader.canvas,
+              0, 0, thumbShader.canvas.width, thumbShader.canvas.height,
+              0, 0, output.width, output.height);
+          }, 0);
+        }
+      }
     };
     db.retrieve(state.id).then((record: ImageRecord) => {
       this.currentRecord = record;
+      this.setTransform(record.transform || new FilterTransform());
       this.imageElement.src = URL.createObjectURL(record.original);
     });
     super.show();
@@ -98,25 +179,30 @@ export default class EditView extends View {
 
   getState(): ViewState {
     const state = super.getState();
-    state.sliderValues = new Map();
-    for (const [name, slider] of this.sliders) {
-      state.sliderValues.set(name, Number(slider.value));
-    }
+    state.transform = state.transform || new FilterTransform();
     return state;
   }
 
   setState(state: ViewState) {
-    for (const [name, slider] of this.sliders) {
-      slider.value = slider.defaultValue;
+    if (state.transform) {
+      this.setTransform(state.transform);
     }
-    if (state.sliderValues) {
-      for (const [name, value] of state.sliderValues) {
-        if (this.sliders.has(name)) {
-          this.sliders.get(name)!.value = String(value);
+    super.setState(state);
+  }
+
+  private setTransform(transform: FilterTransform | {}) {
+    if (transform instanceof FilterTransform) {
+      this.transform = transform;
+    } else {
+      for (const [name] of this.transform) {
+        if (transform[name]) {
+          this.transform[name] = transform[name];
         }
       }
     }
-    super.setState(state);
+    for (const [id, slider] of this.sliders) {
+      slider.value = transform[id];
+    }
   }
 
   private draw() {
@@ -127,21 +213,25 @@ export default class EditView extends View {
 
     this.imageShader.setUniform('sourceSize', new Float32Array([1 / canvas.width, 1 / canvas.height]));
 
-    for (const [name, slider] of this.sliders) {
-      const value = Number(slider.value) / 50;
+    for (const [name, value] of this.transform) {
       this.imageShader.setUniform(name, value);
     }
 
     this.animationFrame = 0;
 
     this.imageShader.render();
+  }
 
-    this.triggerSave();
+  private filterButtonClick(filter: NamedFilter) {
+    this.setTransform(filter.values);
+
+    if (!this.animationFrame) {
+      this.animationFrame = requestAnimationFrame(() => this.draw());
+    }
   }
 
   private effectButtonClick(button: HTMLButtonElement) {
-    const parent = button.parentElement!;
-    const panel = parent.querySelector('.slider-panel')!;
+    const panel = this.viewElement.querySelector(`#${button.id}-panel`)!;
 
     if (this.currentPanel) {
       this.currentPanel.classList.add('hidden');
@@ -158,30 +248,39 @@ export default class EditView extends View {
     }
   }
 
-  private triggerSave() {
-    if (this.pendingSave) {
-      return;
+  private toggleSection() {
+    this.filterSection.classList.toggle('selected');
+    this.tuneSection.classList.toggle('selected');
+    this.filterSectionButton.classList.toggle('selected');
+    this.tuneSectionButton.classList.toggle('selected');
+    if (this.currentPanel) {
+      this.currentPanel.classList.add('hidden');
+      this.currentPanel = null;
     }
-
-    this.pendingSave = true;
-
-    setTimeout(() => this.save(), 500);
   }
 
-  private save() {
-    // TODO: Defer the toBlob call till after the rAF
-    // BUG: crbug.com/752460
-    this.pendingSave = false;
-    this.draw();
-    this.imageShader.canvas.toBlob((blob: Blob) => {
-      if (this.currentRecord) {
-        this.currentRecord.edited = blob;
-        db.store(this.currentRecord);
-      }
-    }, 'image/jpeg');
+  private save(): Promise<{}> {
+    return new Promise((resolve, reject) => {
+      this.draw();
+      this.imageShader.canvas.toBlob((blob: Blob) => {
+        if (this.currentRecord && blob) {
+          this.currentRecord.edited = blob;
+          this.currentRecord.transform = this.transform;
+          db.store(this.currentRecord).then(resolve).catch(reject);
+        } else {
+          reject();
+        }
+      }, 'image/jpeg');
+    });
   }
 
   private closeClick() {
     router.visit(`/browse`);
+  }
+
+  private acceptClick() {
+    this.save().then(() => {
+      router.visit(`/browse`);
+    });
   }
 }

@@ -58,11 +58,10 @@ class Router {
     let newView: View | null = null;
 
     switch (parts[1]) {
-      // TODO: In the final app, the view for / will probably be browse
-      case '':
       case 'capture':
         newView = this.captureView;
         break;
+      case '': // Entry point
       case 'browse':
         newView = this.browseView;
         break;

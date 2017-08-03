@@ -11,11 +11,19 @@
   limitations under the License.
 */
 
+import FilterTransform from './filter-transform';
+
 export default class ImageRecord {
   id: number | null;
+  readonly original: Blob;
   edited: Blob | null;
+  thumbnail: Blob | null;
+  transform: FilterTransform | null;
 
-  constructor(readonly original: Blob) {
+  constructor(original: Blob) {
+    this.original = original;
     this.edited = null;
+    this.thumbnail = null;
+    this.transform = null;
   }
 }

@@ -52,7 +52,7 @@ export default class BrowseView extends View {
         const thumb = document.createElement('div');
         thumb.classList.add('element');
         thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
-        const blob = record.edited || record.original;
+        const blob = record.thumbnail || record.edited || record.original;
         if (blob) {
           const url = URL.createObjectURL(blob);
           this.blobURLs.add(url);
