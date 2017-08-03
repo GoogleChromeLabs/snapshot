@@ -30,10 +30,9 @@ export default class UploadView extends View {
     this.closeButton.addEventListener('click', () => this.close());
   }
 
-
   inputChange() {
-    const files = this.uploadInput.files;
-    if (!files) {
+    const files = this.uploadInput.files!;
+    if (files.length === 0) {
       return;
     }
     const file = files[0];
