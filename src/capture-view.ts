@@ -62,7 +62,7 @@ export default class CaptureView extends View {
   show() {
     this.devicesPromise.then((devices) => {
       this.currentDevice = devices[0];
-      this.startStream(devices[0].deviceId);
+      this.startStream(this.currentDevice.deviceId);
     });
     super.show();
   }
@@ -139,10 +139,8 @@ export default class CaptureView extends View {
   }
 
   private stopStream(stream: MediaStream) {
-    if (stream) {
-      for (const track of stream.getVideoTracks()) {
-        track.stop();
-      }
+    for (const track of stream.getVideoTracks()) {
+      track.stop();
     }
   }
 
@@ -170,14 +168,12 @@ export default class CaptureView extends View {
         const track = stream.getVideoTracks()[0];
         this.capture = new ImageCapture(track);
       }
+    }).catch((reason) => {
+      // TODO: What to do if the user did not grant permission, etc?
     });
   }
 
   private toggleMirror() {
-    if (this.videoElement.classList.contains('mirror')) {
-      this.videoElement.classList.remove('mirror');
-    } else {
-      this.videoElement.classList.add('mirror');
-    }
+    this.videoElement.classList.toggle('mirror');
   }
 }
