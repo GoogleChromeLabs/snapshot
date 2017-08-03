@@ -12,8 +12,6 @@
 */
 
 import babel from 'rollup-plugin-babel';
-import nodeResolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
 import babili from 'rollup-plugin-babili';
 import typescript from 'rollup-plugin-typescript';
 import ts from 'typescript';
@@ -47,8 +45,6 @@ export default {
       typescript: ts,
     }),
     glsl(),
-    nodeResolve({jsnext: true}),
-    commonjs(),
     babel(),
     babili({
       comments: false,
