@@ -4,4 +4,6 @@
 
 This is a sample camera app to demonstrate camera functionality in the context of a Progressive Web App.
 
+You can see a reasonably stable version at https://snapshot-stable.firebaseapp.com/
+
 ![b8f80bc5-42e3-4d48-bb7f-8441b93ba474](https://user-images.githubusercontent.com/393358/29221455-bba48182-7eb6-11e7-95af-625e263b7836.png)
