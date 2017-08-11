@@ -51,7 +51,7 @@ export default class BrowseView extends View {
       for (const record of photos) {
         const thumb = document.createElement('div');
         thumb.classList.add('element');
-        thumb.addEventListener('click', () => router.visit(`/image/${record.id}`));
+        thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
         const blob = record.edited || record.original;
         if (blob) {
           const url = URL.createObjectURL(blob);
@@ -67,7 +67,9 @@ export default class BrowseView extends View {
 
   hide() {
     super.hide();
-
+    // TODO: Have a good think about this. The strategy here is to remove all
+    // child elements when we hide, because smaller DOM seems like a win for the
+    // rest of the app. But really we probably want a recycler instead...
     while (this.listElement.hasChildNodes()) {
       this.listElement.removeChild(this.listElement.lastChild!);
     }

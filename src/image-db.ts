@@ -38,7 +38,7 @@ class ImageDB {
    * set, this will create a new entry. Returns the ID of the record.
    */
   store(record: ImageRecord): Promise<number> {
-    const promise = new Promise((resolve, reject) => {
+    const promise: Promise<number> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
         const transaction = db.transaction(['images'], 'readwrite');
         const put = transaction.objectStore('images').put(record);
@@ -52,9 +52,9 @@ class ImageDB {
   }
 
   retrieve(id: number): Promise<ImageRecord> {
-    const promise = new Promise((resolve, reject) => {
+    const promise: Promise<ImageRecord> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
-        const transaction = db.transaction(['images'], IDBTransaction.READ_ONLY);
+        const transaction = db.transaction(['images'], 'readonly');
         const get = transaction.objectStore('images').get(id);
 
         get.onsuccess = (event) => resolve(get.result);
@@ -66,9 +66,9 @@ class ImageDB {
   }
 
   all(): Promise<ImageRecord[]> {
-    const promise = new Promise((resolve, reject) => {
+    const promise: Promise<ImageRecord[]> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
-        const transaction = db.transaction(['images'], IDBTransaction.READ_ONLY);
+        const transaction = db.transaction(['images'], 'readonly');
         const open = transaction.objectStore('images').openCursor();
         const results: ImageRecord[] = [];
 
@@ -81,7 +81,7 @@ class ImageDB {
           } else {
             resolve(results);
           }
-        }
+        };
         open.onerror = reject;
       }).catch(reject);
     });

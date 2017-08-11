@@ -14,7 +14,6 @@
 import BrowseView from './browse-view';
 import CaptureView from './capture-view';
 import EditView from './edit-view';
-import ImageView from './image-view';
 import UploadView from './upload-view';
 import View from './view';
 import ViewState from './view-state';
@@ -26,7 +25,6 @@ class Router {
   private browseView: BrowseView;
   private captureView: CaptureView;
   private editView: EditView;
-  private imageView: ImageView;
   private uploadView: UploadView;
 
   constructor() {
@@ -35,7 +33,6 @@ class Router {
     this.browseView = new BrowseView();
     this.captureView = new CaptureView();
     this.editView = new EditView();
-    this.imageView = new ImageView();
     this.uploadView = new UploadView();
   }
 
@@ -71,10 +68,6 @@ class Router {
         break;
       case 'edit':
         newView = this.editView;
-        state.id = Number(parts[2]);
-        break;
-      case 'image':
-        newView = this.imageView;
         state.id = Number(parts[2]);
         break;
       case 'upload':

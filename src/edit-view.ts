@@ -22,19 +22,22 @@ import ViewState from './view-state';
 export default class EditView extends View {
   private destElement: HTMLDivElement;
   private imageElement: HTMLImageElement;
-  private backButton: HTMLButtonElement;
+  private closeButton: HTMLButtonElement;
   private sliders: Map<string, HTMLInputElement>;
+  private effectButtons: Set<HTMLButtonElement>;
   private animationFrame: number;
   private imageShader: ImageShader;
-  private currentRecord: ImageRecord;
+  private currentRecord: ImageRecord | null;
+  private currentPanel: Element | null;
+  private pendingSave: boolean;
 
   constructor() {
     super(document.getElementById('edit-view')!);
 
     this.destElement = document.getElementById('edit-dest')! as HTMLDivElement;
-    this.backButton = document.getElementById('edit-view-back')! as HTMLButtonElement;
+    this.closeButton = document.getElementById('edit-view-close')! as HTMLButtonElement;
 
-    this.backButton.addEventListener('click', () => this.backClick());
+    this.closeButton.addEventListener('click', () => this.closeClick());
 
     this.sliders = new Map();
 
@@ -47,9 +50,19 @@ export default class EditView extends View {
       });
     }
 
+    this.effectButtons = new Set(this.viewElement.querySelectorAll("button.effect-button")) as Set<HTMLButtonElement>;
+
+    for (const effectButton of this.effectButtons) {
+      effectButton.addEventListener('click', () => this.effectButtonClick(effectButton));
+    }
+
     this.imageShader = new ImageShader();
     this.imageShader.setFragmentShader(fragmentShader);
     this.destElement.appendChild(this.imageShader.canvas);
+
+    this.currentPanel = null;
+    this.currentRecord = null;
+    this.pendingSave = false;
   }
 
   show() {
@@ -76,6 +89,10 @@ export default class EditView extends View {
   hide() {
     cancelAnimationFrame(this.animationFrame);
     this.animationFrame = 0;
+    this.currentRecord = null;
+    if (this.currentPanel) {
+      this.currentPanel.classList.add('hidden');
+    }
     super.hide();
   }
 
@@ -119,13 +136,52 @@ export default class EditView extends View {
 
     this.imageShader.render();
 
-    canvas.toBlob((blob: Blob) => {
-      this.currentRecord!.edited = blob;
-      db.store(this.currentRecord);
-    });
+    this.triggerSave();
   }
 
-  private backClick() {
-    history.back();
+  private effectButtonClick(button: HTMLButtonElement) {
+    const parent = button.parentElement!;
+    const panel = parent.querySelector('.slider-panel')!;
+
+    if (this.currentPanel) {
+      this.currentPanel.classList.add('hidden');
+
+      if (this.currentPanel !== panel) {
+        this.currentPanel = panel;
+        panel.classList.remove('hidden');
+      } else {
+        this.currentPanel = null;
+      }
+    } else {
+      this.currentPanel = panel;
+      panel.classList.remove('hidden');
+    }
+  }
+
+  private triggerSave() {
+    if (this.pendingSave) {
+      return;
+    }
+
+    this.pendingSave = true;
+
+    setTimeout(() => this.save(), 500);
+  }
+
+  private save() {
+    // TODO: Defer the toBlob call till after the rAF
+    // BUG: crbug.com/752460
+    this.pendingSave = false;
+    this.draw();
+    this.imageShader.canvas.toBlob((blob: Blob) => {
+      if (this.currentRecord) {
+        this.currentRecord.edited = blob;
+        db.store(this.currentRecord);
+      }
+    }, 'image/jpeg');
+  }
+
+  private closeClick() {
+    router.visit(`/browse`);
   }
 }

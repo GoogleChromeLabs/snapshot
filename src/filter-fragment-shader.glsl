@@ -89,7 +89,7 @@ void main() {
 
   float ratio = off.x / off.y;
   float dist = sqrt(pow(texCoords.x - 0.5, 2.0) + pow(ratio * (texCoords.y - 0.5), 2.0));
-  float vigCurve = 1.5 * exp(-pow(dist, 2.0) / (2.0 * pow(-vignette, 2.0)));
+  float vigCurve = exp(-pow(dist, 2.0) / (2.0 * pow(-vignette, 2.0)));
 
   color *= vigCurve;
 

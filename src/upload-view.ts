@@ -18,26 +18,53 @@ import View from './view';
 
 export default class UploadView extends View {
   private uploadInput: HTMLInputElement;
+  private uploadButton: HTMLButtonElement;
+  private uploadDropTarget: HTMLDivElement;
   private closeButton: HTMLButtonElement;
 
   constructor() {
     super(document.getElementById('upload-view')!);
 
     this.uploadInput = document.getElementById('upload-file-input')! as HTMLInputElement;
+    this.uploadButton = document.getElementById('upload-button')! as HTMLButtonElement;
+    this.uploadDropTarget = document.getElementById('upload-drop-target')! as HTMLDivElement;
     this.closeButton = document.getElementById('upload-view-close')! as HTMLButtonElement;
 
     this.uploadInput.addEventListener('change', () => this.inputChange());
+    this.uploadButton.addEventListener('click', () => this.triggerUpload());
+    this.uploadDropTarget.addEventListener('drop', (e) => this.dropHandler(e));
+    this.uploadDropTarget.addEventListener('dragover', (e) => this.dragOverHandler(e));
     this.closeButton.addEventListener('click', () => this.close());
   }
 
   inputChange() {
-    const files = this.uploadInput.files!;
+    this.ingest(this.uploadInput.files!);
+  }
+
+  triggerUpload() {
+    this.uploadInput.click();
+  }
+
+  dragOverHandler(e: DragEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  dropHandler(e: DragEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    this.ingest(e.dataTransfer.files);
+  }
+
+  ingest(files: FileList) {
     if (files.length === 0) {
       return;
     }
     const file = files[0];
     const record = new ImageRecord(file);
-    db.store(record).then((id) => router.visit(`/image/${id}`));
+    db.store(record).then((id) => router.visit(`/edit/${id}`));
   }
 
   close() {
