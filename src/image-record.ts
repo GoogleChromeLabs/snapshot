@@ -15,12 +15,12 @@ import FilterTransform from './filter-transform';
 
 export default class ImageRecord {
   id: number | null;
-  readonly original: Blob;
-  edited: Blob | null;
-  thumbnail: Blob | null;
+  readonly original: ArrayBuffer;
+  edited: ArrayBuffer | null;
+  thumbnail: ArrayBuffer | null;
   transform: FilterTransform | null;
 
-  constructor(original: Blob) {
+  constructor(original: ArrayBuffer) {
     this.original = original;
     this.edited = null;
     this.thumbnail = null;

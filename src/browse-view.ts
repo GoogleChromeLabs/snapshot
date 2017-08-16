@@ -32,6 +32,10 @@ export default class BrowseView extends View {
     this.emptyListElement = document.getElementById('empty-browse-list') as HTMLButtonElement;
     this.listElement = document.getElementById('browse-list') as HTMLButtonElement;
 
+    if (!('mediaDevices' in navigator)) {
+      this.captureButton.classList.add('hidden');
+    }
+
     this.captureButton.addEventListener('click', () => this.captureClick());
     this.uploadButton.addEventListener('click', () => this.uploadClick());
 
@@ -52,8 +56,9 @@ export default class BrowseView extends View {
         const thumb = document.createElement('div');
         thumb.classList.add('element');
         thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
-        const blob = record.thumbnail || record.edited || record.original;
-        if (blob) {
+        const buffer = record.thumbnail || record.edited || record.original;
+        if (buffer) {
+          const blob = new Blob([buffer], {type: 'image/jpg'});
           const url = URL.createObjectURL(blob);
           this.blobURLs.add(url);
           thumb.style.backgroundImage = `url(${url})`;

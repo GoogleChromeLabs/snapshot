@@ -58,7 +58,9 @@ export default class EditView extends View {
 
     this.sliders = new Map();
 
-    for (const slider of [...this.viewElement.getElementsByTagName('input')]) {
+    const sliderElements = this.viewElement.getElementsByTagName('input');
+
+    for (const slider of Array.from(sliderElements)) {
       this.sliders.set(slider.id, slider);
 
       slider.addEventListener('input', () => {
@@ -162,7 +164,9 @@ export default class EditView extends View {
     db.retrieve(state.id).then((record: ImageRecord) => {
       this.currentRecord = record;
       this.setTransform(record.transform || new FilterTransform());
-      this.imageElement.src = URL.createObjectURL(record.original);
+      const buffer = record.original;
+      const blob = new Blob([buffer], {type: 'image/jpeg'});
+      this.imageElement.src = URL.createObjectURL(blob);
     });
     super.show();
   }
@@ -201,7 +205,7 @@ export default class EditView extends View {
       }
     }
     for (const [id, slider] of this.sliders) {
-      slider.value = transform[id];
+      slider.value = String(this.transform[id] * 50);
     }
   }
 
@@ -259,19 +263,53 @@ export default class EditView extends View {
     }
   }
 
-  private save(): Promise<{}> {
+  private dataUrlToArrayBuffer(dataURI: string): ArrayBuffer {
+    const byteString = atob(dataURI.split(',')[1]);
+    const ia = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return ia.buffer;
+  }
+
+  private BlobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      this.draw();
-      this.imageShader.canvas.toBlob((blob: Blob) => {
-        if (this.currentRecord && blob) {
-          this.currentRecord.edited = blob;
-          this.currentRecord.transform = this.transform;
-          db.store(this.currentRecord).then(resolve).catch(reject);
-        } else {
-          reject();
-        }
-      }, 'image/jpeg');
+      const reader = new FileReader();
+      reader.addEventListener('loadend', () => resolve(reader.result));
+      reader.readAsArrayBuffer(blob);
     });
+  }
+
+  private canvasToArrayBuffer(canvas: HTMLCanvasElement): Promise<ArrayBuffer> {
+    if (canvas.toBlob) {
+      return new Promise(async (resolve, reject) => {
+        canvas.toBlob((blob: Blob) => {
+          if (blob) {
+            const reader = new FileReader();
+            reader.addEventListener('loadend', () => resolve(reader.result));
+            reader.readAsArrayBuffer(blob);
+          } else {
+            reject();
+          }
+        }, 'image/jpeg');
+      });
+    } else {
+      const dataURL = canvas.toDataURL('image/jpeg');
+      const buffer = this.dataUrlToArrayBuffer(dataURL);
+      return Promise.resolve(buffer);
+    }
+  }
+
+  private async save(): Promise<void> {
+    this.draw();
+    const buffer = await this.canvasToArrayBuffer(this.imageShader.canvas);
+
+    if (this.currentRecord) {
+      this.currentRecord.edited = buffer;
+      this.currentRecord.transform = this.transform;
+
+      db.store(this.currentRecord);
+    }
   }
 
   private closeClick() {

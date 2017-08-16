@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-const VERSION = 1;
+const VERSION = 2;
 
 const FILES = [
   '/app.min.js',
