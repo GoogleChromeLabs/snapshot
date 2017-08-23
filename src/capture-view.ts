@@ -11,6 +11,7 @@
   limitations under the License.
 */
 
+import constants from './constants';
 import db from './image-db';
 import ImageRecord from './image-record';
 import router from './router';
@@ -79,7 +80,7 @@ export default class CaptureView extends View {
   async getDevices() {
     let devices: MediaDeviceInfo[] = [];
 
-    if ('mediaDevices' in navigator) {
+    if (constants.SUPPORTS_MEDIA_DEVICES) {
       devices = await navigator.mediaDevices.enumerateDevices();
       devices = devices.filter((device) => device.kind === 'videoinput');
     }

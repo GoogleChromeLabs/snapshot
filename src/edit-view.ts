@@ -282,7 +282,7 @@ export default class EditView extends View {
 
   private canvasToArrayBuffer(canvas: HTMLCanvasElement): Promise<ArrayBuffer> {
     if (canvas.toBlob) {
-      return new Promise(async (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         canvas.toBlob((blob: Blob) => {
           if (blob) {
             const reader = new FileReader();

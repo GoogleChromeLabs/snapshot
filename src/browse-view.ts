@@ -11,6 +11,7 @@
   limitations under the License.
 */
 
+import constants from './constants';
 import db from './image-db';
 import ImageRecord from './image-record';
 import router from './router';
@@ -32,7 +33,7 @@ export default class BrowseView extends View {
     this.emptyListElement = document.getElementById('empty-browse-list') as HTMLButtonElement;
     this.listElement = document.getElementById('browse-list') as HTMLButtonElement;
 
-    if (!('mediaDevices' in navigator)) {
+    if (!constants.SUPPORTS_MEDIA_DEVICES) {
       this.captureButton.classList.add('hidden');
     }
 
