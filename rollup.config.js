@@ -11,7 +11,6 @@
   limitations under the License.
 */
 
-import babel from 'rollup-plugin-babel';
 import babili from 'rollup-plugin-babili';
 import typescript from 'rollup-plugin-typescript';
 import ts from 'typescript';
@@ -45,7 +44,6 @@ export default {
       typescript: ts,
     }),
     glsl(),
-    babel(),
     babili({
       comments: false,
     }),

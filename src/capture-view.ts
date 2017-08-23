@@ -11,6 +11,7 @@
   limitations under the License.
 */
 
+import constants from './constants';
 import db from './image-db';
 import ImageRecord from './image-record';
 import router from './router';
@@ -77,8 +78,12 @@ export default class CaptureView extends View {
   }
 
   async getDevices() {
-    let devices = await navigator.mediaDevices.enumerateDevices() as MediaDeviceInfo[];
-    devices = devices.filter((device) => device.kind === 'videoinput');
+    let devices: MediaDeviceInfo[] = [];
+
+    if (constants.SUPPORTS_MEDIA_DEVICES) {
+      devices = await navigator.mediaDevices.enumerateDevices();
+      devices = devices.filter((device) => device.kind === 'videoinput');
+    }
 
     if (devices.length < 2) {
       this.cameraChooseButton.classList.add('hidden');
@@ -134,8 +139,14 @@ export default class CaptureView extends View {
   }
 
   private storeResult(blob: Blob) {
-    const record = new ImageRecord(blob);
-    db.store(record).then((id) => router.visit(`/edit/${id}`));
+    const reader = new FileReader();
+    reader.addEventListener('loadend', async (e: ProgressEvent) => {
+      const buffer = reader.result;
+      const record = new ImageRecord(buffer);
+      const id = await db.store(record);
+      router.visit(`/edit/${id}`);
+    });
+    reader.readAsArrayBuffer(blob);
   }
 
   private stopStream(stream: MediaStream) {

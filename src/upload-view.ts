@@ -63,8 +63,14 @@ export default class UploadView extends View {
       return;
     }
     const file = files[0];
-    const record = new ImageRecord(file);
-    db.store(record).then((id) => router.visit(`/edit/${id}`));
+    const reader = new FileReader();
+    reader.addEventListener('loadend', async (e: ProgressEvent) => {
+      const buffer = reader.result;
+      const record = new ImageRecord(buffer);
+      const id = await db.store(record);
+      router.visit(`/edit/${id}`);
+    });
+    reader.readAsArrayBuffer(file);
   }
 
   close() {

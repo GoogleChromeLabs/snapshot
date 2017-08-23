@@ -78,7 +78,7 @@ void main() {
 
   vec3 desaturated = vec3(dot(saturationVector, tex.rgb));
   vec3 mixed = mix(desaturated, tex.rgb, saturation);
-  vec4 color = vec4(mixed, 1.0);
+  vec4 color = vec4(mixed, tex.a);
   color.r += warmth;
   color.b -= warmth;
 

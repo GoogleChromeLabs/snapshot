@@ -11,19 +11,6 @@
   limitations under the License.
 */
 
-import FilterTransform from './filter-transform';
-
-export default class ImageRecord {
-  id: number | null;
-  readonly original: ArrayBuffer;
-  edited: ArrayBuffer | null;
-  thumbnail: ArrayBuffer | null;
-  transform: FilterTransform | null;
-
-  constructor(original: ArrayBuffer) {
-    this.original = original;
-    this.edited = null;
-    this.thumbnail = null;
-    this.transform = null;
-  }
-}
+export default {
+  SUPPORTS_MEDIA_DEVICES: 'mediaDevices' in navigator,
+};
