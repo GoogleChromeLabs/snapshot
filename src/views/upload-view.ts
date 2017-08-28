@@ -11,9 +11,9 @@
   limitations under the License.
 */
 
-import db from './image-db';
-import ImageRecord from './image-record';
-import router from './router';
+import db from '../image-db';
+import ImageRecord from '../image-record';
+import router from '../router';
 import View from './view';
 
 export default class UploadView extends View {

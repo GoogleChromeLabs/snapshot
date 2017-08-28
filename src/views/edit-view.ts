@@ -11,19 +11,23 @@
   limitations under the License.
 */
 
-import fragmentShader from './filter-fragment-shader.glsl';
-import FilterTransform from './filter-transform';
-import db from './image-db';
-import ImageRecord from './image-record';
-import ImageShader from './image-shader';
-import {NamedFilter, namedFilters} from './named-filter';
-import router from './router';
+import constants from '../constants';
+import fragmentShader from '../filters/filter-fragment-shader.glsl';
+import FilterTransform from '../filters/filter-transform';
+import ImageShader from '../filters/image-shader';
+import {NamedFilter, namedFilters} from '../filters/named-filter';
+import db from '../image-db';
+import ImageRecord from '../image-record';
+import {blobToArrayBuffer, canvasToBlob} from '../promise-helpers';
+import router from '../router';
+import ViewState from '../view-state';
 import View from './view';
-import ViewState from './view-state';
 
 export default class EditView extends View {
   private destElement: HTMLDivElement;
-  private imageElement: HTMLImageElement;
+  private sourceElement: HTMLImageElement | null;
+  private sourceWidth: number;
+  private sourceHeight: number;
   private closeButton: HTMLButtonElement;
   private acceptButton: HTMLButtonElement;
   private sliders: Map<string, HTMLInputElement>;
@@ -96,13 +100,16 @@ export default class EditView extends View {
 
     this.imageShader = new ImageShader();
     this.imageShader.setFragmentShader(fragmentShader);
+    this.sourceElement = null;
+    this.sourceWidth = 0;
+    this.sourceHeight = 0;
     this.destElement.appendChild(this.imageShader.canvas);
 
     this.currentPanel = null;
     this.currentRecord = null;
   }
 
-  show() {
+  async show() {
     const state = this.getState();
 
     this.setTransform(state.transform || new FilterTransform());
@@ -112,67 +119,30 @@ export default class EditView extends View {
       throw new Error(`Couldn't get id of image`);
     }
 
-    this.imageElement = document.createElement('img');
-    this.imageElement.onload = () => {
-      URL.revokeObjectURL(this.imageElement.src);
-      this.imageShader.setImage(this.imageElement);
+    const record: ImageRecord = await db.retrieve(state.id);
+    this.currentRecord = record;
+    this.setTransform(record.transform || new FilterTransform());
+    const buffer = record.original;
+    const type = constants.IMAGE_TYPE;
+    const blob = new Blob([buffer], {type});
+
+    const source = document.createElement('img');
+    this.sourceElement = source;
+    source.onload = () => {
+      URL.revokeObjectURL(source.src);
+      this.imageShader.setImage(source);
+      this.sourceWidth = source.naturalWidth;
+      this.sourceHeight = source.naturalHeight;
       this.animationFrame = requestAnimationFrame(() => this.draw());
-
-      const aspectRatio = this.imageElement.naturalWidth / this.imageElement.naturalHeight;
-
-      const thumbnail = document.createElement('canvas');
-      thumbnail.height = 100 * devicePixelRatio;
-      thumbnail.width = thumbnail.height * aspectRatio;
-      thumbnail.getContext('2d')!.drawImage(this.imageElement, 0, 0, thumbnail.width, thumbnail.height);
-      const thumbShader = new ImageShader();
-      thumbShader.setFragmentShader(fragmentShader);
-      thumbShader.setImage(thumbnail);
-
-      const relativeSize = thumbnail.height / this.imageElement.naturalHeight;
-
-      for (const filter of namedFilters) {
-        const output =
-          document.querySelector(`#filter-button-${filter.name.toLowerCase()} .filter-thumbnail`) as HTMLCanvasElement;
-        if (!output) {
-          console.error(`No output thumbnail for filter ${filter.name}`);
-        } else {
-          setTimeout(() => {
-            output.width = thumbnail.width;
-            output.height = thumbnail.height;
-            const context = output.getContext('2d') as CanvasRenderingContext2D;
-            thumbShader.setUniform('sourceSize', new Float32Array([1 / thumbnail.width, 1 / thumbnail.height]));
-
-            const transform = filter.values;
-            // Reduce the blur value relative to the size of the thumbnail
-            thumbShader.setUniform('blur', relativeSize * transform.blur);
-            thumbShader.setUniform('brightness', transform.brightness);
-            thumbShader.setUniform('contrast', transform.contrast);
-            thumbShader.setUniform('grey', transform.grey);
-            thumbShader.setUniform('saturation', transform.saturation);
-            thumbShader.setUniform('sharpen', transform.sharpen);
-            thumbShader.setUniform('vignette', transform.vignette);
-            thumbShader.setUniform('warmth', transform.warmth);
-            thumbShader.render();
-            context.drawImage(
-              thumbShader.canvas,
-              0, 0, thumbShader.canvas.width, thumbShader.canvas.height,
-              0, 0, output.width, output.height);
-          }, 0);
-        }
-      }
+      this.renderThumbnails();
     };
-    db.retrieve(state.id).then((record: ImageRecord) => {
-      this.currentRecord = record;
-      this.setTransform(record.transform || new FilterTransform());
-      const buffer = record.original;
-      const blob = new Blob([buffer], {type: 'image/jpeg'});
-      this.imageElement.src = URL.createObjectURL(blob);
-    });
+    source.src = URL.createObjectURL(blob);
     super.show();
   }
 
   hide() {
     cancelAnimationFrame(this.animationFrame);
+    this.sourceElement = null;
     this.animationFrame = 0;
     this.currentRecord = null;
     if (this.currentPanel) {
@@ -194,6 +164,54 @@ export default class EditView extends View {
     super.setState(state);
   }
 
+  private renderThumbnails() {
+    if (!this.sourceElement) {
+      return;
+    }
+    const aspectRatio = this.sourceWidth / this.sourceHeight;
+
+    const thumbnail = document.createElement('canvas');
+    thumbnail.height = 100 * devicePixelRatio;
+    thumbnail.width = thumbnail.height * aspectRatio;
+    thumbnail.getContext('2d')!.drawImage(this.sourceElement, 0, 0, thumbnail.width, thumbnail.height);
+    const thumbShader = new ImageShader();
+    thumbShader.setFragmentShader(fragmentShader);
+    thumbShader.setImage(thumbnail);
+
+    const relativeSize = thumbnail.height / this.sourceHeight;
+
+    for (const filter of namedFilters) {
+      const output =
+        document.querySelector(`#filter-button-${filter.name.toLowerCase()} .filter-thumbnail`) as HTMLCanvasElement;
+      if (!output) {
+        console.error(`No output thumbnail for filter ${filter.name}`);
+      } else {
+        setTimeout(() => {
+          output.width = thumbnail.width;
+          output.height = thumbnail.height;
+          const context = output.getContext('2d') as CanvasRenderingContext2D;
+          thumbShader.setUniform('sourceSize', new Float32Array([1 / thumbnail.width, 1 / thumbnail.height]));
+
+          const transform = filter.values;
+          // Reduce the blur value relative to the size of the thumbnail
+          thumbShader.setUniform('blur', relativeSize * transform.blur);
+          thumbShader.setUniform('brightness', transform.brightness);
+          thumbShader.setUniform('contrast', transform.contrast);
+          thumbShader.setUniform('grey', transform.grey);
+          thumbShader.setUniform('saturation', transform.saturation);
+          thumbShader.setUniform('sharpen', transform.sharpen);
+          thumbShader.setUniform('vignette', transform.vignette);
+          thumbShader.setUniform('warmth', transform.warmth);
+          thumbShader.render();
+          context.drawImage(
+            thumbShader.canvas,
+            0, 0, thumbShader.canvas.width, thumbShader.canvas.height,
+            0, 0, output.width, output.height);
+        }, 0);
+      }
+    }
+  }
+
   private setTransform(transform: FilterTransform | {}) {
     if (transform instanceof FilterTransform) {
       this.transform = transform;
@@ -211,9 +229,8 @@ export default class EditView extends View {
 
   private draw() {
     const canvas = this.imageShader.canvas;
-
-    canvas.width = this.imageElement.naturalWidth;
-    canvas.height = this.imageElement.naturalHeight;
+    canvas.width = this.sourceWidth;
+    canvas.height = this.sourceHeight;
 
     this.imageShader.setUniform('sourceSize', new Float32Array([1 / canvas.width, 1 / canvas.height]));
 
@@ -272,31 +289,15 @@ export default class EditView extends View {
     return ia.buffer;
   }
 
-  private BlobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.addEventListener('loadend', () => resolve(reader.result));
-      reader.readAsArrayBuffer(blob);
-    });
-  }
-
-  private canvasToArrayBuffer(canvas: HTMLCanvasElement): Promise<ArrayBuffer> {
+  private async canvasToArrayBuffer(canvas: HTMLCanvasElement): Promise<ArrayBuffer> {
     if (canvas.toBlob) {
-      return new Promise((resolve, reject) => {
-        canvas.toBlob((blob: Blob) => {
-          if (blob) {
-            const reader = new FileReader();
-            reader.addEventListener('loadend', () => resolve(reader.result));
-            reader.readAsArrayBuffer(blob);
-          } else {
-            reject();
-          }
-        }, 'image/jpeg');
-      });
+      const blob = await canvasToBlob(canvas, constants.IMAGE_TYPE);
+      const buffer = await blobToArrayBuffer(blob);
+      return buffer;
     } else {
-      const dataURL = canvas.toDataURL('image/jpeg');
+      const dataURL = canvas.toDataURL(constants.IMAGE_TYPE);
       const buffer = this.dataUrlToArrayBuffer(dataURL);
-      return Promise.resolve(buffer);
+      return buffer;
     }
   }
 

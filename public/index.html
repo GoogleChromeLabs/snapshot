@@ -160,7 +160,7 @@
         overflow-y: scroll;
       }
 
-      #browse-list .element:before {
+      #browse-list .element:after {
         padding-top: 56.25%;
         content: '';
         display: block;
@@ -168,9 +168,16 @@
 
       #browse-list .element {
         width: 50%;
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-position: center;
+        position: relative;
+      }
+
+      #browse-list .element * {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        object-fit: cover;
       }
 
       #browse-view button {

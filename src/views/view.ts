@@ -11,10 +11,29 @@
   limitations under the License.
 */
 
-import router from './router';
+import ViewState from '../view-state';
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+export default class View {
+  protected viewElement: HTMLElement;
+  private state?: ViewState;
+
+  constructor(viewElement: HTMLElement) {
+    this.viewElement = viewElement;
+  }
+
+  show(): void {
+    this.viewElement.classList.remove('hidden');
+  }
+
+  hide(): void {
+    this.viewElement.classList.add('hidden');
+  }
+
+  getState(): ViewState {
+    return this.state || new ViewState();
+  }
+
+  setState(state: ViewState) {
+    this.state = state;
+  }
 }
-
-router.changeHandler();

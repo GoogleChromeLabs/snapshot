@@ -11,12 +11,12 @@
   limitations under the License.
 */
 
-import constants from './constants';
-import db from './image-db';
-import ImageRecord from './image-record';
-import router from './router';
+import constants from '../constants';
+import db from '../image-db';
+import ImageRecord from '../image-record';
+import router from '../router';
+import ViewState from '../view-state';
 import View from './view';
-import ViewState from './view-state';
 
 export default class BrowseView extends View {
   private captureButton: HTMLButtonElement;
@@ -57,12 +57,17 @@ export default class BrowseView extends View {
         const thumb = document.createElement('div');
         thumb.classList.add('element');
         thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
+
         const buffer = record.thumbnail || record.edited || record.original;
         if (buffer) {
-          const blob = new Blob([buffer], {type: 'image/jpg'});
+          const blob = new Blob([buffer], {type: constants.IMAGE_TYPE});
           const url = URL.createObjectURL(blob);
+          const image = document.createElement('img');
+          image.src = url;
+          thumb.appendChild(image);
           this.blobURLs.add(url);
-          thumb.style.backgroundImage = `url(${url})`;
+        } else {
+          // TODO: Handle this error condition
         }
         this.listElement.appendChild(thumb);
       }

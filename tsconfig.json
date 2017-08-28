@@ -3,6 +3,7 @@
     "module": "es2015",
     "target": "es6",
     "strictNullChecks": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "sourceMap": true
   }
 }
