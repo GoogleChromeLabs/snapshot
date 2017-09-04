@@ -64,7 +64,7 @@ export default class CaptureView extends View {
   }
 
   hide() {
-    this.cameraHelper.stop();
+    this.cameraHelper.stopStream();
     this.videoElement.pause();
     super.hide();
   }
@@ -136,6 +136,12 @@ export default class CaptureView extends View {
       this.videoElement = this.videoElement2;
       this.videoElement2 = temp;
       this.videoElement.play();
+      const settings = this.cameraHelper.getSettings();
+      if (settings.facingMode === 'user') {
+        this.videoElement.classList.add('mirror');
+      } else {
+        this.videoElement.classList.remove('mirror');
+      }
       this.videoElement.classList.remove('hidden');
       this.videoElement2.classList.add('hidden');
       this.videoElement2.pause();

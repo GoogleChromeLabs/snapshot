@@ -13,6 +13,7 @@
 
 import db from '../image-db';
 import ImageRecord from '../image-record';
+import {blobToArrayBuffer} from '../promise-helpers';
 import router from '../router';
 import View from './view';
 
@@ -58,19 +59,15 @@ export default class UploadView extends View {
     this.ingest(e.dataTransfer.files);
   }
 
-  ingest(files: FileList) {
+  async ingest(files: FileList) {
     if (files.length === 0) {
       return;
     }
     const file = files[0];
-    const reader = new FileReader();
-    reader.addEventListener('loadend', async (e: ProgressEvent) => {
-      const buffer = reader.result;
-      const record = new ImageRecord(buffer);
-      const id = await db.store(record);
-      router.visit(`/edit/${id}`);
-    });
-    reader.readAsArrayBuffer(file);
+    const buffer = await blobToArrayBuffer(file);
+    const record = new ImageRecord(buffer);
+    const id = await db.store(record);
+    router.visit(`/edit/${id}`);
   }
 
   close() {

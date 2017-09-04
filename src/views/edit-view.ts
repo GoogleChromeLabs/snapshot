@@ -286,7 +286,7 @@ export default class EditView extends View {
     for (let i = 0; i < byteString.length; i++) {
         ia[i] = byteString.charCodeAt(i);
     }
-    return ia.buffer;
+    return ia.buffer as ArrayBuffer;
   }
 
   private async canvasToArrayBuffer(canvas: HTMLCanvasElement): Promise<ArrayBuffer> {

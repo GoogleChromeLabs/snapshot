@@ -24,11 +24,18 @@ const streamConstraints: MediaStreamConstraints = {
   },
 };
 
+const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+
 export default class CameraHelper {
   private stream: MediaStream | null;
+  private track: MediaStreamTrack | null;
+  private trackConstraints: MediaTrackSettings;
 
   constructor() {
     this.stream = null;
+    this.track = null;
+
+    this.trackConstraints = {};
   }
 
   async getCameras() {
@@ -56,7 +63,9 @@ export default class CameraHelper {
 
       const track = stream.getVideoTracks()[0];
       const capture = new ImageCapture(track);
-      return await capture.takePhoto();
+      const settings: PhotoSettings = {};
+
+      return await capture.takePhoto(settings);
     } else {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d')!;
@@ -66,10 +75,6 @@ export default class CameraHelper {
 
       return await canvasToBlob(canvas, constants.IMAGE_TYPE);
     }
-  }
-
-  stop() {
-    this.stopStream();
   }
 
   stopStream() {
@@ -87,6 +92,52 @@ export default class CameraHelper {
 
     const stream = await navigator.mediaDevices.getUserMedia(streamConstraints);
     this.stream = stream;
+    this.track = stream.getVideoTracks()[0];
+    this.trackConstraints = {};
     return stream;
+  }
+
+  getSettings(): MediaTrackSettings {
+    if (!this.track || !this.track.getSettings) {
+      return {};
+    }
+    return this.track.getSettings();
+  }
+
+  getCapabilities(): MediaTrackCapabilities {
+    if (!this.track || !this.track.getCapabilities) {
+      return {};
+    }
+    return this.track.getCapabilities();
+  }
+
+  setConstraint(name: string, value: any) {
+    if (name in supportedConstraints && supportedConstraints[name]) {
+      const capabilities = this.getCapabilities();
+      console.log(capabilities[name], name, value);
+      if (capabilities[name]) {
+        this.trackConstraints[name] = value;
+      }
+    }
+    this.applyConstraints();
+  }
+
+  applyConstraints() {
+    if (this.track && this.track.applyConstraints) {
+      const constraints = this.track.getConstraints();
+      const advanced: MediaTrackConstraintSet[] = constraints.advanced || [];
+
+      for (const [name, value] of Object.entries(this.trackConstraints)) {
+        const constraint = {};
+        constraint[name] = value;
+        advanced.push(constraint);
+      }
+
+      if (advanced.length > 0) {
+        constraints.advanced = advanced;
+      }
+
+      this.track.applyConstraints(constraints);
+    }
   }
 }
