@@ -15,7 +15,6 @@ import constants from './constants';
 import {canvasToBlob} from './promise-helpers';
 
 const streamConstraints: MediaStreamConstraints = {
-  audio: false,
   video: {
     deviceId: '',
     facingMode: ['user', 'environment'],
@@ -24,7 +23,11 @@ const streamConstraints: MediaStreamConstraints = {
   },
 };
 
-const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+let supportedConstraints: MediaTrackSupportedConstraints = {};
+
+if (constants.SUPPORTS_MEDIA_DEVICES) {
+  supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+}
 
 export default class CameraHelper {
   private stream: MediaStream | null;
@@ -112,14 +115,14 @@ export default class CameraHelper {
   }
 
   setConstraint(name: string, value: any) {
-    if (name in supportedConstraints && supportedConstraints[name]) {
+    if (supportedConstraints[name]) {
       const capabilities = this.getCapabilities();
       console.log(capabilities[name], name, value);
       if (capabilities[name]) {
         this.trackConstraints[name] = value;
       }
     }
-    this.applyConstraints();
+    return this.applyConstraints();
   }
 
   applyConstraints() {
@@ -137,7 +140,7 @@ export default class CameraHelper {
         constraints.advanced = advanced;
       }
 
-      this.track.applyConstraints(constraints);
+      return this.track.applyConstraints(constraints);
     }
   }
 }

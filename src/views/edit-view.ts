@@ -123,8 +123,7 @@ export default class EditView extends View {
     this.currentRecord = record;
     this.setTransform(record.transform || new FilterTransform());
     const buffer = record.original;
-    const type = constants.IMAGE_TYPE;
-    const blob = new Blob([buffer], {type});
+    const blob = new Blob([buffer], {type: constants.IMAGE_TYPE});
 
     const source = document.createElement('img');
     this.sourceElement = source;
