@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-import FilterTransform from './filter-transform';
+import FilterTransform from './filters/filter-transform';
 
 export default class ImageRecord {
   id: number | null;

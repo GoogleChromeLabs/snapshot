@@ -11,12 +11,12 @@
   limitations under the License.
 */
 
-import BrowseView from './browse-view';
-import CaptureView from './capture-view';
-import EditView from './edit-view';
-import UploadView from './upload-view';
-import View from './view';
 import ViewState from './view-state';
+import BrowseView from './views/browse-view';
+import CaptureView from './views/capture-view';
+import EditView from './views/edit-view';
+import UploadView from './views/upload-view';
+import View from './views/view';
 
 class Router {
   private currentView: View | null;

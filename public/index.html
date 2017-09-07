@@ -160,7 +160,7 @@
         overflow-y: scroll;
       }
 
-      #browse-list .element:before {
+      #browse-list .element:after {
         padding-top: 56.25%;
         content: '';
         display: block;
@@ -168,9 +168,16 @@
 
       #browse-list .element {
         width: 50%;
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-position: center;
+        position: relative;
+      }
+
+      #browse-list .element * {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        object-fit: cover;
       }
 
       #browse-view button {
@@ -472,17 +479,17 @@
       </div>
 
       <div class="toolbar right">
-          <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use xlink:href="#svg-flip">
-            </svg>
-          </button>
+        <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" tabindex="0">
+          <svg viewBox="0 0 24 24">
+            <use xlink:href="#svg-flip">
+          </svg>
+        </button>
 
-          <button class="dark" id="camera-choose-button" aria-label="Choose camera" tabindex="0">
-            <svg viewBox="0 0 24 24">
-              <use xlink:href="#svg-camera-rear">
-            </svg>
-          </button>
+        <button class="dark" id="camera-choose-button" aria-label="Choose camera" tabindex="0">
+          <svg viewBox="0 0 24 24">
+            <use xlink:href="#svg-camera-rear">
+          </svg>
+        </button>
       </div>
       <video id="preview" muted playsinline class="contain-image"></video>
       <video id="preview2" muted playsinline class="contain-image"></video>

@@ -49,4 +49,5 @@ export default {
     }),
   ],
   dest: 'public/app.min.js',
+  sourceMap: true,
 };

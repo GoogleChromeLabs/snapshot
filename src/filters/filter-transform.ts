@@ -39,6 +39,8 @@ export default class FilterTransform {
     this.vignette = 2;
   }
 
+  // This allows us to `for (... of ...)` over the filters
+  // I really feel like there should be a simpler/clearer way to express this
   [Symbol.iterator]() {
     return function*() {
       yield ['saturation', this.saturation];

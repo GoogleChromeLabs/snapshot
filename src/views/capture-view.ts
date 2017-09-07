@@ -11,22 +11,14 @@
   limitations under the License.
 */
 
-import constants from './constants';
-import db from './image-db';
-import ImageRecord from './image-record';
-import router from './router';
+import CameraHelper from '../camera-helper';
+import constants from '../constants';
+import db from '../image-db';
+import ImageRecord from '../image-record';
+import {blobToArrayBuffer} from '../promise-helpers';
+import router from '../router';
+import ViewState from '../view-state';
 import View from './view';
-import ViewState from './view-state';
-
-const streamConstraints: MediaStreamConstraints = {
-  audio: false,
-  video: {
-    deviceId: '',
-    facingMode: ['user', 'environment'],
-    height: {ideal: 1080},
-    width: {ideal: 1920},
-  },
-};
 
 export default class CaptureView extends View {
   private videoElement: HTMLVideoElement;
@@ -35,7 +27,8 @@ export default class CaptureView extends View {
   private cameraChooseButton: HTMLButtonElement;
   private mirrorButton: HTMLButtonElement;
   private closeButton: HTMLButtonElement;
-  private capture: ImageCapture | null;
+
+  private cameraHelper: CameraHelper;
 
   private devicesPromise: Promise<MediaDeviceInfo[]>;
   private currentDevice: MediaDeviceInfo | null;
@@ -50,6 +43,8 @@ export default class CaptureView extends View {
     this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
 
     this.videoElement2.classList.add('hidden');
+
+    this.cameraHelper = new CameraHelper();
 
     this.takePhotoButton.addEventListener('click', () => this.takePhoto());
     this.cameraChooseButton.addEventListener('click', () => this.toggleCameraChooser());
@@ -69,42 +64,29 @@ export default class CaptureView extends View {
   }
 
   hide() {
-    // TODO: Tear down video and stream
-    if (this.capture) {
-      this.capture.track.stop();
-    }
+    this.cameraHelper.stopStream();
     this.videoElement.pause();
     super.hide();
   }
 
   async getDevices() {
-    let devices: MediaDeviceInfo[] = [];
+    const cameras = await this.cameraHelper.getCameras();
 
-    if (constants.SUPPORTS_MEDIA_DEVICES) {
-      devices = await navigator.mediaDevices.enumerateDevices();
-      devices = devices.filter((device) => device.kind === 'videoinput');
-    }
-
-    if (devices.length < 2) {
+    if (cameras.length < 2) {
       this.cameraChooseButton.classList.add('hidden');
     } else {
       this.cameraChooseButton.classList.remove('hidden');
     }
 
-    return devices;
+    return cameras;
   }
 
-  takePhoto() {
-    if (this.capture) {
-      this.capture.takePhoto().then((blob: Blob) => this.storeResult(blob));
+  async takePhoto() {
+    const blob = await this.cameraHelper.takePhoto(this.videoElement);
+    if (blob) {
+      this.storeResult(blob);
     } else {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d')!;
-      canvas.width = this.videoElement.videoWidth;
-      canvas.height = this.videoElement.videoHeight;
-      context.drawImage(this.videoElement, 0, 0);
-
-      canvas.toBlob((blob: Blob) => this.storeResult(blob), 'image/jpg');
+      // TODO: This is an unhandled error condition
     }
   }
 
@@ -117,6 +99,7 @@ export default class CaptureView extends View {
     //    features of the cameras.
     // TODO: Need to change the button to reflect the kind of camera that will
     // be selected.
+    // TODO: Need to decide what happens if we change camera while recording
     const devices = await this.devicesPromise;
     if (devices.length < 2) {
       return;
@@ -138,50 +121,31 @@ export default class CaptureView extends View {
     router.visit(`/browse`);
   }
 
-  private storeResult(blob: Blob) {
-    const reader = new FileReader();
-    reader.addEventListener('loadend', async (e: ProgressEvent) => {
-      const buffer = reader.result;
-      const record = new ImageRecord(buffer);
-      const id = await db.store(record);
-      router.visit(`/edit/${id}`);
-    });
-    reader.readAsArrayBuffer(blob);
+  private async storeResult(blob: Blob) {
+    const buffer = await blobToArrayBuffer(blob);
+    const record = new ImageRecord(buffer);
+    const id = await db.store(record);
+    router.visit(`/edit/${id}`);
   }
 
-  private stopStream(stream: MediaStream) {
-    for (const track of stream.getVideoTracks()) {
-      track.stop();
-    }
-  }
-
-  private startStream(deviceId) {
-    const current = this.videoElement.srcObject;
-    if (current) {
-      this.stopStream(current);
-    }
-
-    (streamConstraints.video as MediaTrackConstraints).deviceId = deviceId;
-
-    navigator.mediaDevices.getUserMedia(streamConstraints).then((stream) => {
-      this.videoElement2.srcObject = stream;
-      this.videoElement2.onloadedmetadata = () => {
-        const temp = this.videoElement;
-        this.videoElement = this.videoElement2;
-        this.videoElement2 = temp;
-        this.videoElement.play();
-        this.videoElement.classList.remove('hidden');
-        this.videoElement2.classList.add('hidden');
-        this.videoElement2.pause();
-      };
-
-      if ('ImageCapture' in window) {
-        const track = stream.getVideoTracks()[0];
-        this.capture = new ImageCapture(track);
+  private async startStream(deviceId) {
+    const stream = await this.cameraHelper.startStream(deviceId);
+    this.videoElement2.srcObject = stream;
+    this.videoElement2.onloadedmetadata = () => {
+      const temp = this.videoElement;
+      this.videoElement = this.videoElement2;
+      this.videoElement2 = temp;
+      this.videoElement.play();
+      const settings = this.cameraHelper.getSettings();
+      if (settings.facingMode === 'user') {
+        this.videoElement.classList.add('mirror');
+      } else {
+        this.videoElement.classList.remove('mirror');
       }
-    }).catch((reason) => {
-      // TODO: What to do if the user did not grant permission, etc?
-    });
+      this.videoElement.classList.remove('hidden');
+      this.videoElement2.classList.add('hidden');
+      this.videoElement2.pause();
+    };
   }
 
   private toggleMirror() {

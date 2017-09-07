@@ -11,29 +11,19 @@
   limitations under the License.
 */
 
-import ViewState from './view-state';
+export function canvasToBlob(canvas: HTMLCanvasElement, type: string): Promise<Blob> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob: Blob) => resolve(blob), type);
+  });
+}
 
-export default class View {
-  protected viewElement: HTMLElement;
-  private state?: ViewState;
-
-  constructor(viewElement: HTMLElement) {
-    this.viewElement = viewElement;
-  }
-
-  show(): void {
-    this.viewElement.classList.remove('hidden');
-  }
-
-  hide(): void {
-    this.viewElement.classList.add('hidden');
-  }
-
-  getState(): ViewState {
-    return this.state || new ViewState();
-  }
-
-  setState(state: ViewState) {
-    this.state = state;
-  }
+export function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener('loadend', async (e: ProgressEvent) => {
+      resolve(reader.result);
+    });
+    reader.addEventListener('error', reject);
+    reader.readAsArrayBuffer(blob);
+  });
 }
