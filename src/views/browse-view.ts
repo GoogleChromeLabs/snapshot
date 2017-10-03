@@ -13,9 +13,7 @@
 
 import constants from '../constants';
 import db from '../image-db';
-import ImageRecord from '../image-record';
 import router from '../router';
-import ViewState from '../view-state';
 import View from './view';
 
 export default class BrowseView extends View {

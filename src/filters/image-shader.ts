@@ -229,7 +229,7 @@ export default class ImageShader {
     }
   }
 
-  private bindBuffers(index, positions, uvs) {
+  private bindBuffers(index: Uint16Array, positions: Float32Array, uvs: Float32Array) {
     const gl = this.context;
     this.bindIndicesBuffer(index);
     this.bindAttributeBuffer(0, 2, positions);
@@ -238,7 +238,7 @@ export default class ImageShader {
     gl.enableVertexAttribArray(1);
   }
 
-  private bindAttributeBuffer(attributeNumber, size, data) {
+  private bindAttributeBuffer(attributeNumber: number, size: number, data: Float32Array) {
     const gl = this.context;
     const id = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, id);
@@ -247,7 +247,7 @@ export default class ImageShader {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
-  private bindIndicesBuffer(data) {
+  private bindIndicesBuffer(data: Uint16Array) {
     const gl = this.context;
     const id = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, id);

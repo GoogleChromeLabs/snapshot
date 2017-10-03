@@ -1,7 +1,7 @@
 {
 	"extends": "tslint:latest",
 	"rules": {
-		"quotemark": ["single",	"avoid-escape"],
+		"quotemark": [true, "single",	"avoid-escape"],
 		"no-console": [false],
 		"member-access": [false],
 		"max-classes-per-file": [false],

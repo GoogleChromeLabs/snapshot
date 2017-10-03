@@ -2,8 +2,12 @@
   "compilerOptions": {
     "module": "es2015",
     "target": "es2017",
-    "strictNullChecks": true,
+    "strict": true,
     "moduleResolution": "node",
-    "sourceMap": true
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "suppressImplicitAnyIndexErrors": true
   }
 }

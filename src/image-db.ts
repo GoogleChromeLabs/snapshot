@@ -96,7 +96,7 @@ class ImageDB {
     });
   }
 
-  private error(reason) {
+  private error(reason: Event) {
     console.error(reason);
   }
 
@@ -108,7 +108,7 @@ class ImageDB {
       case 1:
         db.deleteObjectStore('images');
       case 0:
-        db.createObjectStore('images', {keyPath: "id", autoIncrement: true});
+        db.createObjectStore('images', {keyPath: 'id', autoIncrement: true});
     }
   }
 }

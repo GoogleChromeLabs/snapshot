@@ -12,12 +12,10 @@
 */
 
 import CameraHelper from '../camera-helper';
-import constants from '../constants';
 import db from '../image-db';
 import ImageRecord from '../image-record';
 import {blobToArrayBuffer} from '../promise-helpers';
 import router from '../router';
-import ViewState from '../view-state';
 import View from './view';
 
 export default class CaptureView extends View {

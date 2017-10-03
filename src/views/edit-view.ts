@@ -92,7 +92,7 @@ export default class EditView extends View {
       this.filterSection.appendChild(button);
     }
 
-    this.effectButtons = new Set(this.viewElement.querySelectorAll("button.effect-button")) as Set<HTMLButtonElement>;
+    this.effectButtons = new Set(this.viewElement.querySelectorAll('button.effect-button')) as Set<HTMLButtonElement>;
 
     for (const effectButton of this.effectButtons) {
       effectButton.addEventListener('click', () => this.effectButtonClick(effectButton));
@@ -211,11 +211,11 @@ export default class EditView extends View {
     }
   }
 
-  private setTransform(transform: FilterTransform | {}) {
+  private setTransform(transform: FilterTransform | {[name: string]: number}) {
     if (transform instanceof FilterTransform) {
       this.transform = transform;
     } else {
-      for (const [name] of this.transform) {
+      for (const name of Object.getOwnPropertyNames(this.transform)) {
         if (transform[name]) {
           this.transform[name] = transform[name];
         }
@@ -233,7 +233,7 @@ export default class EditView extends View {
 
     this.imageShader.setUniform('sourceSize', new Float32Array([1 / canvas.width, 1 / canvas.height]));
 
-    for (const [name, value] of this.transform) {
+    for (const [name, value] of Object.entries(this.transform)) {
       this.imageShader.setUniform(name, value);
     }
 

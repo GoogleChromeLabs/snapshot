@@ -39,21 +39,6 @@ export default class FilterTransform {
     this.vignette = 2;
   }
 
-  // This allows us to `for (... of ...)` over the filters
-  // I really feel like there should be a simpler/clearer way to express this
-  [Symbol.iterator]() {
-    return function*() {
-      yield ['saturation', this.saturation];
-      yield ['warmth', this.warmth];
-      yield ['sharpen', this.sharpen];
-      yield ['blur', this.blur];
-      yield ['brightness', this.brightness];
-      yield ['contrast', this.contrast];
-      yield ['grey', this.grey];
-      yield ['vignette', this.vignette];
-    }.bind(this)();
-  }
-
   randomize() {
     this.saturation = random(0, 2);
     this.warmth = random(-0.08, 0.08);

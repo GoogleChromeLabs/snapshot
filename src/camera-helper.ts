@@ -100,7 +100,7 @@ export default class CameraHelper {
     }
   }
 
-  async startStream(deviceId) {
+  async startStream(deviceId: string) {
     this.stopStream();
 
     (streamConstraints.video as MediaTrackConstraints).deviceId = deviceId;
