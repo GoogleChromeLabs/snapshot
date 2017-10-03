@@ -78,7 +78,7 @@ export default class ImageShader {
 
     this.uniformLocations = new Map();
 
-    this.createVAO(INDEX, POSITIONS, UVS);
+    this.bindBuffers(INDEX, POSITIONS, UVS);
 
     gl.clearColor(1, 1, 1, 1);
 
@@ -229,14 +229,8 @@ export default class ImageShader {
     }
   }
 
-  private createVAO(index, positions, uvs) {
+  private bindBuffers(index, positions, uvs) {
     const gl = this.context;
-    const ext = gl.getExtension('OES_vertex_array_object');
-    if (!ext) {
-      throw new Error(`Browser doesn't support VAOs`);
-    }
-    const vaoId = ext.createVertexArrayOES();
-    ext.bindVertexArrayOES(vaoId);
     this.bindIndicesBuffer(index);
     this.bindAttributeBuffer(0, 2, positions);
     this.bindAttributeBuffer(1, 2, uvs);
