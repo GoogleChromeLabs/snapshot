@@ -488,7 +488,7 @@
 
     <div class="view-element hidden" id="capture-view">
       <div class="toolbar left">
-        <button class="dark" id="capture-view-close" aria-label="Close" tabindex="0">
+        <button class="dark" id="capture-view-close" aria-label="Close" title="Close" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-close"/>
           </svg>
@@ -496,7 +496,7 @@
       </div>
       <div class="toolbar bottom center">
         <div>
-          <button id="capture-button" aria-label="Take photo" autofocus tabindex="0">
+          <button id="capture-button" aria-label="Take photo" title="Take photo" autofocus tabindex="0">
             <div id="capture-button-inner">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-photo-camera">
@@ -507,7 +507,7 @@
       </div>
 
       <div class="toolbar right">
-        <button class="dark" id="capture-flash-button" aria-label="Toggle flash" tabindex="0">
+        <button class="dark" id="capture-flash-button" aria-label="Toggle flash" title="Toggle flash" tabindex="0">
           <svg id="icon-flash-on" viewBox="0 0 24 24">
             <use xlink:href="#svg-flash-on">
           </svg>
@@ -519,13 +519,13 @@
           </svg>
         </button>
 
-        <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" tabindex="0">
+        <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" title="Toggle mirroring" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-flip">
           </svg>
         </button>
 
-        <button class="dark" id="camera-choose-button" aria-label="Choose camera" tabindex="0">
+        <button class="dark" id="camera-choose-button" aria-label="Choose camera" title="Choose camera" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-camera-rear">
           </svg>
@@ -540,7 +540,7 @@
     <div class="view-element hidden" id="upload-view">
       <input type="file" id="upload-file-input" accept="image/*" style="display: none">
       <div class="toolbar left">
-        <button class="dark" id="upload-view-close" aria-label="Close" tabindex="0">
+        <button class="dark" id="upload-view-close" aria-label="Close" title="Close" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-close">
           </svg>
@@ -574,12 +574,12 @@
       <div id="browse-list">
       </div>
       <div class="toolbar bottom floating right">
-        <button class="light" id="browse-upload-button" aria-label="Upload photo" tabindex="0">
+        <button class="light" id="browse-upload-button" aria-label="Upload photo" title="Upload photo" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-add-a-photo">
           </svg>
         </button>
-        <button class="light" id="browse-capture-button" aria-label="Take photo" tabindex="0">
+        <button class="light" id="browse-capture-button" aria-label="Take photo" title="Take photo" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-photo-camera">
           </svg>
@@ -632,12 +632,12 @@
 
       <div class="bottom-ui bottom center">
         <div id="edit-section-toggle">
-          <button id="edit-select-filters" class="dark edit-select-button selected" aria-label="Filters" tabindex="0">
+          <button id="edit-select-filters" class="dark edit-select-button selected" aria-label="Filters" title="Filters" tabindex="0">
             <svg viewBox="0 0 24 24">
               <use xlink:href="#svg-photo-filter">
             </svg>
           </button>
-          <button id="edit-select-tuning" class="dark edit-select-button" aria-label="Tuning" tabindex="0">
+          <button id="edit-select-tuning" class="dark edit-select-button" aria-label="Tuning" title="Tuning" tabindex="0">
             <svg viewBox="0 0 24 24">
               <use xlink:href="#svg-tune">
             </svg>
@@ -649,37 +649,37 @@
 
         <div id="edit-tune" class="edit-toolbar-section">
           <div class="effect-button-container">
-            <button class="effect-button dark" id="effect-button-saturation" aria-label="Saturation" tabindex="0">
+            <button class="effect-button dark" id="effect-button-saturation" aria-label="Saturation" title="Saturation" tabindex="0">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-palette">
               </svg>
             </button>
 
-            <button class="effect-button dark" id="effect-button-warmth" aria-label="Warmth" tabindex="0">
+            <button class="effect-button dark" id="effect-button-warmth" aria-label="Warmth" title="Warmth" tabindex="0">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-wb-cloudy">
               </svg>
             </button>
 
-            <button class="effect-button dark" id="effect-button-sharpen" aria-label="Sharpen" tabindex="0">
+            <button class="effect-button dark" id="effect-button-sharpen" aria-label="Sharpen" title="Sharpen" tabindex="0">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-blur-on">
               </svg>
             </button>
 
-            <button class="effect-button dark" id="effect-button-brightness" aria-label="Brightness" tabindex="0">
+            <button class="effect-button dark" id="effect-button-brightness" aria-label="Brightness" title="Brightness" tabindex="0">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-brightness-6">
               </svg>
             </button>
 
-            <button class="effect-button dark" id="effect-button-contrast" aria-label="Contrast" tabindex="0">
+            <button class="effect-button dark" id="effect-button-contrast" aria-label="Contrast" title="Contrast" tabindex="0">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-exposure">
               </svg>
             </button>
 
-            <button class="effect-button dark" id="effect-button-vignette" aria-label="Vignette" tabindex="0">
+            <button class="effect-button dark" id="effect-button-vignette" aria-label="Vignette" title="Vignette" tabindex="0">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-vignette">
               </svg>
