@@ -225,6 +225,22 @@
         outline: 0;
       }
 
+      #capture-flash-button svg {
+        display: none;
+      }
+
+      #capture-flash-button.flash-flash svg#icon-flash-on {
+        display: initial;
+      }
+
+      #capture-flash-button.flash-off svg#icon-flash-off {
+        display: initial;
+      }
+
+      #capture-flash-button.flash-auto svg#icon-flash-auto {
+        display: initial;
+      }
+
       /* Upload */
 
       #upload-button {
@@ -453,6 +469,18 @@
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
         </g>
+        <g id="svg-flash-on">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+        </g>
+        <g id="svg-flash-off">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3.27 3L2 4.27l5 5V13h3v9l3.58-6.14L17.73 20 19 18.73 3.27 3zM17 10h-4l4-8H7v2.18l8.46 8.46L17 10z"/>
+        </g>
+        <g id="svg-flash-auto">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 2v12h3v9l7-12H9l4-9H3zm16 0h-2l-3.2 9h1.9l.7-2h3.2l.7 2h1.9L19 2zm-2.15 5.65L18 4l1.15 3.65h-2.3z"/>
+        </g>
       </defs>
     </svg>
 
@@ -479,6 +507,18 @@
       </div>
 
       <div class="toolbar right">
+        <button class="dark" id="capture-flash-button" aria-label="Toggle flash" tabindex="0">
+          <svg id="icon-flash-on" viewBox="0 0 24 24">
+            <use xlink:href="#svg-flash-on">
+          </svg>
+          <svg id="icon-flash-off" viewBox="0 0 24 24">
+            <use xlink:href="#svg-flash-off">
+          </svg>
+          <svg id="icon-flash-auto" viewBox="0 0 24 24">
+            <use xlink:href="#svg-flash-auto">
+          </svg>
+        </button>
+
         <button class="dark" id="capture-mirror-button" aria-label="Toggle mirroring" tabindex="0">
           <svg viewBox="0 0 24 24">
             <use xlink:href="#svg-flip">
