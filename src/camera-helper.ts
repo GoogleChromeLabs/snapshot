@@ -31,7 +31,6 @@ if (constants.SUPPORTS_MEDIA_DEVICES) {
 
 export default class CameraHelper {
   flash: FillLightMode;
-  redEyeReduction: boolean;
 
   private stream: MediaStream | null;
   private track: MediaStreamTrack | null;
@@ -46,7 +45,6 @@ export default class CameraHelper {
     this.trackConstraints = {};
 
     this.flash = 'off';
-    this.redEyeReduction = true;
   }
 
   async getCameras() {
@@ -79,10 +77,6 @@ export default class CameraHelper {
       if (this.photoCapabilities) {
         if (this.photoCapabilities.fillLightMode.includes(this.flash)) {
           settings.fillLightMode = this.flash;
-        }
-
-        if (this.photoCapabilities.redEyeReduction === 'controllable') {
-          settings.redEyeReduction = this.redEyeReduction;
         }
       }
 
@@ -143,43 +137,5 @@ export default class CameraHelper {
       return {};
     }
     return this.track.getSettings();
-  }
-
-  getCapabilities(): MediaTrackCapabilities {
-    if (!this.track || !this.track.getCapabilities) {
-      return {};
-    }
-    return this.track.getCapabilities();
-  }
-
-  setConstraint(name: string, value: any) {
-    if (supportedConstraints[name]) {
-      const capabilities = this.getCapabilities();
-      if (capabilities[name]) {
-        this.trackConstraints[name] = value;
-      }
-    }
-    return this.applyConstraints();
-  }
-
-  applyConstraints() {
-    if (this.track && this.track.applyConstraints) {
-      const constraints = this.track.getConstraints();
-      const advanced: MediaTrackConstraintSet[] = [];
-
-      for (const [name, value] of Object.entries(this.trackConstraints)) {
-        const constraint: MediaTrackConstraintSet = {};
-        constraint[name] = value;
-        advanced.push(constraint);
-      }
-
-      // In Chrome < 63, setting constraints.advanced to an empty array will
-      // crash the tab
-      if (advanced.length > 0) {
-        constraints.advanced = advanced;
-      }
-
-      return this.track.applyConstraints(constraints);
-    }
   }
 }

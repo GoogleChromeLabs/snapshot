@@ -124,7 +124,6 @@ export default class CaptureView extends View {
   private async chooseCamera(camera: MediaDeviceInfo) {
     this.currentDevice = camera;
     await this.startStream(this.currentDevice.deviceId);
-    const trackCapabilities = this.cameraHelper.getCapabilities();
     const photoCapabilities = this.cameraHelper.getPhotoCapabilities();
     const settings = this.cameraHelper.getSettings();
     if (settings.facingMode === 'user') {
@@ -132,9 +131,7 @@ export default class CaptureView extends View {
     } else {
       this.videoElement.classList.remove('mirror');
     }
-    this.flashButton.classList.remove('flash-flash');
-    this.flashButton.classList.remove('flash-off');
-    this.flashButton.classList.remove('flash-auto');
+    this.flashButton.classList.remove('flash-flash', 'flash-off', 'flash-auto');
     this.flashButton.classList.add(`flash-${this.cameraHelper.flash}`);
     if (photoCapabilities.flash.length > 0) {
       this.flashButton.classList.remove('hidden');
