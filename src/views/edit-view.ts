@@ -16,9 +16,8 @@ import fragmentShader from '../filters/filter-fragment-shader.glsl';
 import FilterTransform from '../filters/filter-transform';
 import ImageShader from '../filters/image-shader';
 import {NamedFilter, namedFilters} from '../filters/named-filter';
-import db from '../image-db';
 import ImageRecord from '../image-record';
-import {blobToArrayBuffer, canvasToBlob} from '../promise-helpers';
+import {canvasToBlob} from '../promise-helpers';
 import router from '../router';
 import ViewState from '../view-state';
 import View from './view';
@@ -119,11 +118,10 @@ export default class EditView extends View {
       throw new Error(`Couldn't get id of image`);
     }
 
-    const record: ImageRecord = await db.retrieve(state.id);
+    const record: ImageRecord = await ImageRecord.fromDatabase(state.id);
     this.currentRecord = record;
     this.setTransform(record.transform || new FilterTransform());
-    const buffer = record.original;
-    const blob = new Blob([buffer], {type: constants.IMAGE_TYPE});
+    const blob = await record.getOriginal();
 
     const source = document.createElement('img');
     this.sourceElement = source;
@@ -279,36 +277,14 @@ export default class EditView extends View {
     }
   }
 
-  private dataUrlToArrayBuffer(dataURI: string): ArrayBuffer {
-    const byteString = atob(dataURI.split(',')[1]);
-    const ia = new Uint8Array(byteString.length);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    return ia.buffer as ArrayBuffer;
-  }
-
-  private async canvasToArrayBuffer(canvas: HTMLCanvasElement): Promise<ArrayBuffer> {
-    if (canvas.toBlob) {
-      const blob = await canvasToBlob(canvas, constants.IMAGE_TYPE);
-      const buffer = await blobToArrayBuffer(blob);
-      return buffer;
-    } else {
-      const dataURL = canvas.toDataURL(constants.IMAGE_TYPE);
-      const buffer = this.dataUrlToArrayBuffer(dataURL);
-      return buffer;
-    }
-  }
-
   private async save(): Promise<void> {
     this.draw();
-    const buffer = await this.canvasToArrayBuffer(this.imageShader.canvas);
+    const blob = await canvasToBlob(this.imageShader.canvas, constants.IMAGE_TYPE);
 
     if (this.currentRecord) {
-      this.currentRecord.edited = buffer;
+      this.currentRecord.setEdited(blob);
       this.currentRecord.transform = this.transform;
-
-      db.store(this.currentRecord);
+      this.currentRecord.save();
     }
   }
 

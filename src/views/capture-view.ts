@@ -12,9 +12,7 @@
 */
 
 import CameraHelper from '../camera-helper';
-import db from '../image-db';
 import ImageRecord from '../image-record';
-import {blobToArrayBuffer} from '../promise-helpers';
 import router from '../router';
 import View from './view';
 
@@ -139,10 +137,10 @@ export default class CaptureView extends View {
   }
 
   private async storeResult(blob: Blob) {
-    const buffer = await blobToArrayBuffer(blob);
-    const record = new ImageRecord(buffer);
-    const id = await db.store(record);
-    router.visit(`/edit/${id}`);
+    const record = new ImageRecord();
+    record.setOriginal(blob);
+    await record.save();
+    router.visit(`/edit/${record.id}`);
   }
 
   private async startStream(deviceId: string) {

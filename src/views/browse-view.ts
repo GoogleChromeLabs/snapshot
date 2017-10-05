@@ -12,7 +12,7 @@
 */
 
 import constants from '../constants';
-import db from '../image-db';
+import ImageRecord from '../image-record';
 import router from '../router';
 import View from './view';
 
@@ -42,7 +42,7 @@ export default class BrowseView extends View {
   }
 
   async show() {
-    const photos = await db.all();
+    const photos = await ImageRecord.getAll();
 
     if (photos.length === 0) {
       this.emptyListElement.classList.remove('hidden');
@@ -56,9 +56,8 @@ export default class BrowseView extends View {
         thumb.classList.add('element');
         thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
 
-        const buffer = record.thumbnail || record.edited || record.original;
-        if (buffer) {
-          const blob = new Blob([buffer], {type: constants.IMAGE_TYPE});
+        const blob = await record.getThumbnail();
+        if (blob) {
           const url = URL.createObjectURL(blob);
           const image = document.createElement('img');
           image.src = url;

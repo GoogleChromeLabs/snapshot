@@ -11,9 +11,7 @@
   limitations under the License.
 */
 
-import db from '../image-db';
 import ImageRecord from '../image-record';
-import {blobToArrayBuffer} from '../promise-helpers';
 import router from '../router';
 import View from './view';
 
@@ -64,10 +62,10 @@ export default class UploadView extends View {
       return;
     }
     const file = files[0];
-    const buffer = await blobToArrayBuffer(file);
-    const record = new ImageRecord(buffer);
-    const id = await db.store(record);
-    router.visit(`/edit/${id}`);
+    const record = new ImageRecord();
+    record.setOriginal(file);
+    await record.save();
+    router.visit(`/edit/${record.id}`);
   }
 
   close() {
