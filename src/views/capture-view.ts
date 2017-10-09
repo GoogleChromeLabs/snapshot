@@ -26,6 +26,7 @@ export default class CaptureView extends View {
   private takePhotoButton: HTMLButtonElement;
   private cameraChooseButton: HTMLButtonElement;
   private mirrorButton: HTMLButtonElement;
+  private flashButton: HTMLButtonElement;
   private closeButton: HTMLButtonElement;
 
   private cameraHelper: CameraHelper;
@@ -40,6 +41,7 @@ export default class CaptureView extends View {
     this.takePhotoButton = document.getElementById('capture-button')! as HTMLButtonElement;
     this.cameraChooseButton = document.getElementById('camera-choose-button')! as HTMLButtonElement;
     this.mirrorButton = document.getElementById('capture-mirror-button')! as HTMLButtonElement;
+    this.flashButton = document.getElementById('capture-flash-button')! as HTMLButtonElement;
     this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
 
     this.videoElement2.classList.add('hidden');
@@ -49,6 +51,7 @@ export default class CaptureView extends View {
     this.takePhotoButton.addEventListener('click', () => this.takePhoto());
     this.cameraChooseButton.addEventListener('click', () => this.toggleCameraChooser());
     this.mirrorButton.addEventListener('click', () => this.toggleMirror());
+    this.flashButton.addEventListener('click', () => this.toggleFlash());
     this.closeButton.addEventListener('click', () => this.close());
 
     this.devicesPromise = this.getDevices();
@@ -57,8 +60,7 @@ export default class CaptureView extends View {
 
   show() {
     this.devicesPromise.then((devices) => {
-      this.currentDevice = devices[0];
-      this.startStream(this.currentDevice.deviceId);
+      this.chooseCamera(devices[0]);
     });
     super.show();
   }
@@ -109,16 +111,33 @@ export default class CaptureView extends View {
       const currentIndex = devices.indexOf(this.currentDevice);
 
       // TODO: Should show chooser for many devices, not just cycle
-      this.currentDevice = devices[(currentIndex + 1) % devices.length];
+      this.chooseCamera(devices[(currentIndex + 1) % devices.length]);
     } else {
-      this.currentDevice = devices[0];
+      this.chooseCamera(devices[0]);
     }
-
-    this.startStream(this.currentDevice.deviceId);
   }
 
   close() {
     router.visit(`/browse`);
+  }
+
+  private async chooseCamera(camera: MediaDeviceInfo) {
+    this.currentDevice = camera;
+    await this.startStream(this.currentDevice.deviceId);
+    const photoCapabilities = this.cameraHelper.getPhotoCapabilities();
+    const settings = this.cameraHelper.getSettings();
+    if (settings.facingMode === 'user') {
+      this.videoElement.classList.add('mirror');
+    } else {
+      this.videoElement.classList.remove('mirror');
+    }
+    this.flashButton.classList.remove('flash-flash', 'flash-off', 'flash-auto');
+    this.flashButton.classList.add(`flash-${this.cameraHelper.flash}`);
+    if (photoCapabilities.flash.length > 0) {
+      this.flashButton.classList.remove('hidden');
+    } else {
+      this.flashButton.classList.add('hidden');
+    }
   }
 
   private async storeResult(blob: Blob) {
@@ -128,27 +147,33 @@ export default class CaptureView extends View {
     router.visit(`/edit/${id}`);
   }
 
-  private async startStream(deviceId) {
+  private async startStream(deviceId: string) {
     const stream = await this.cameraHelper.startStream(deviceId);
     this.videoElement2.srcObject = stream;
-    this.videoElement2.onloadedmetadata = () => {
-      const temp = this.videoElement;
-      this.videoElement = this.videoElement2;
-      this.videoElement2 = temp;
-      this.videoElement.play();
-      const settings = this.cameraHelper.getSettings();
-      if (settings.facingMode === 'user') {
-        this.videoElement.classList.add('mirror');
-      } else {
-        this.videoElement.classList.remove('mirror');
-      }
-      this.videoElement.classList.remove('hidden');
-      this.videoElement2.classList.add('hidden');
-      this.videoElement2.pause();
-    };
+    return new Promise((resolve) => {
+      this.videoElement2.onloadedmetadata = () => {
+        const temp = this.videoElement;
+        this.videoElement = this.videoElement2;
+        this.videoElement2 = temp;
+        this.videoElement.play();
+        this.videoElement.classList.remove('hidden');
+        this.videoElement2.classList.add('hidden');
+        this.videoElement2.pause();
+        resolve();
+      };
+    });
   }
 
   private toggleMirror() {
     this.videoElement.classList.toggle('mirror');
+  }
+
+  private toggleFlash() {
+    this.flashButton.classList.remove(`flash-${this.cameraHelper.flash}`);
+    const photoCapabilities = this.cameraHelper.getPhotoCapabilities();
+    let index = photoCapabilities.flash.indexOf(this.cameraHelper.flash);
+    index = (index + 1) % photoCapabilities.flash.length;
+    this.cameraHelper.flash = photoCapabilities.flash[index];
+    this.flashButton.classList.add(`flash-${this.cameraHelper.flash}`);
   }
 }
