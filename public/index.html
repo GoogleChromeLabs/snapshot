@@ -345,7 +345,7 @@
 
       /* Edit */
 
-      #edit-dest canvas {
+      canvas#edit-dest {
         max-width: calc(100% - 40px);
         max-height: calc(100% - 20px);
         box-shadow: 1px 3px 10px black;
@@ -353,7 +353,7 @@
         margin: 0 auto;
       }
 
-      #edit-dest {
+      #edit-container {
         width: 100%;
         height: 100%;
         overflow: hidden;
@@ -683,7 +683,9 @@
           </svg>
         </button>
       </div>
-      <div id="edit-dest"></div>
+      <div id="edit-container">
+        <canvas id="edit-dest"></canvas>
+      </div>
 
       <!-- Sliders -->
       <div>

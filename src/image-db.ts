@@ -23,7 +23,7 @@ export interface IListRecord {
   editedId: number | null;
   thumbnailId: number | null;
 
-  transform: {[name: string]: number} | null;
+  transform: INumDict | null;
 }
 
 interface IMediaRecord {

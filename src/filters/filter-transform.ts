@@ -11,6 +11,12 @@
   limitations under the License.
 */
 
+import fragmentShader from './filter-fragment-shader.glsl';
+import ImageShader from './image-shader';
+
+const shader = new ImageShader();
+shader.setFragmentShader(fragmentShader);
+
 const random = (min: number, max: number): number => {
   let result = Math.random();
   result *= (max - min);
@@ -65,5 +71,59 @@ export default class FilterTransform {
     this.contrast = random(0, 2);
     this.grey = random(0, 1);
     this.vignette = random(0.2, 2);
+  }
+
+  apply(source: ImageSource, dest: HTMLCanvasElement, height?: number) {
+    let sourceWidth: number;
+    let sourceHeight: number;
+    let relativeSize = 1;
+
+    if (source instanceof HTMLImageElement) {
+      sourceWidth = source.naturalWidth;
+      sourceHeight = source.naturalHeight;
+    } else if (source instanceof HTMLVideoElement) {
+      sourceWidth = source.videoWidth;
+      sourceHeight = source.videoHeight;
+    } else {
+      sourceWidth = source.width;
+      sourceHeight = source.height;
+    }
+
+    if (height && height !== sourceHeight) {
+      const resized = document.createElement('canvas');
+      const aspectRatio = sourceWidth / sourceHeight;
+      resized.height = height * devicePixelRatio;
+      resized.width = resized.height * aspectRatio;
+      resized.getContext('2d')!.drawImage(source, 0, 0, resized.width, resized.height);
+      shader.setImage(resized);
+      relativeSize = resized.height / sourceHeight;
+      dest.width = resized.width;
+      dest.height = resized.height;
+    } else {
+      shader.setImage(source);
+      dest.width = sourceWidth;
+      dest.height = sourceHeight;
+    }
+
+    shader.canvas.width = dest.width;
+    shader.canvas.height = dest.height;
+    shader.setUniform('sourceSize', new Float32Array([1 / dest.width, 1 / dest.height]));
+
+    // Reduce the blur value relative to the size of the output
+    shader.setUniform('blur', relativeSize * this.blur);
+    shader.setUniform('brightness', this.brightness);
+    shader.setUniform('contrast', this.contrast);
+    shader.setUniform('grey', this.grey);
+    shader.setUniform('saturation', this.saturation);
+    shader.setUniform('sharpen', this.sharpen);
+    shader.setUniform('vignette', this.vignette);
+    shader.setUniform('warmth', this.warmth);
+    shader.render();
+
+    const context = dest.getContext('2d')!;
+    context.drawImage(
+      shader.canvas,
+      0, 0, shader.canvas.width, shader.canvas.height,
+      0, 0, dest.width, dest.height);
   }
 }

@@ -11,13 +11,16 @@
   limitations under the License.
 */
 
+import constants from './constants';
 import FilterTransform from './filters/filter-transform';
 import {IListRecord, imageDB} from './image-db';
+import {canvasToBlob} from './promise-helpers';
 
 enum ImageState {
-  NOT_LOADED,
-  LOADED,
-  CHANGED,
+  NOT_LOADED,  // Haven't looked for it in IndexedDB yet
+  LOADED,      // Version in memory is the same as in IDB
+  CHANGED,     // Version in memory is different from IDB
+  OUT_OF_DATE, // Version in memory does not reflect the original and/or transform
 }
 
 export default class ImageRecord {
@@ -67,7 +70,7 @@ export default class ImageRecord {
   editedId: number | null;
   thumbnailId: number | null;
 
-  transform: FilterTransform | null;
+  private $transform: FilterTransform | null;
 
   private originalCache: Blob | null;
   private editedCache: Blob | null;
@@ -85,11 +88,21 @@ export default class ImageRecord {
     this.editedId = null;
     this.thumbnailId = null;
 
-    this.transform = null;
+    this.$transform = null;
 
     this.originalCache = null;
     this.editedCache = null;
     this.thumbnailCache = null;
+  }
+
+  get transform(): FilterTransform | null {
+    return this.$transform;
+  }
+
+  set transform(value: FilterTransform | null) {
+    this.$transform = value;
+    this.editedState = ImageState.OUT_OF_DATE;
+    this.thumbnailState = ImageState.OUT_OF_DATE;
   }
 
   async getOriginal(): Promise<Blob | null> {
@@ -106,8 +119,11 @@ export default class ImageRecord {
       this.editedCache = await imageDB.retrieveMedia(this.editedId);
       this.editedState = ImageState.LOADED;
     }
-
-    return this.editedCache || this.getOriginal();
+    if (!this.editedId || this.editedState === ImageState.OUT_OF_DATE) {
+      this.editedCache = await this.drawFiltered();
+      this.editedState = ImageState.CHANGED;
+    }
+    return this.editedCache;
   }
 
   async getThumbnail(): Promise<Blob | null> {
@@ -115,20 +131,39 @@ export default class ImageRecord {
       this.thumbnailCache = await imageDB.retrieveMedia(this.thumbnailId);
       this.thumbnailState = ImageState.LOADED;
     }
-
-    return this.thumbnailCache || this.getEdited();
+    if (!this.thumbnailId || this.thumbnailState === ImageState.OUT_OF_DATE) {
+      this.thumbnailCache = await this.drawFiltered(200);
+      this.thumbnailState = ImageState.CHANGED;
+    }
+    return this.thumbnailCache;
   }
 
   setOriginal(media: Blob) {
-    // TODO: If we set the original, we should wipe out/delete any edited/thumbnail versions too.
     this.originalCache = media;
     this.originalState = ImageState.CHANGED;
+    this.editedState = ImageState.OUT_OF_DATE;
+    this.thumbnailState = ImageState.OUT_OF_DATE;
   }
 
-  setEdited(media: Blob) {
-    // TODO: If we set the edited, we should wipe out/delete any thumbnail version too.
-    this.editedCache = media;
-    this.editedState = ImageState.CHANGED;
+  async drawFiltered(height?: number): Promise<Blob> {
+    const original = await this.getOriginal();
+    const result: Promise<Blob> = new Promise((resolve, reject) => {
+      if (original) {
+        const source = document.createElement('img');
+        source.onload = () => {
+          if (this.transform) {
+            const canvas = document.createElement('canvas');
+            URL.revokeObjectURL(source.src);
+            this.transform.apply(source, canvas, height);
+            resolve(canvasToBlob(canvas, constants.IMAGE_TYPE));
+          }
+        };
+        source.onerror = reject;
+        source.src = URL.createObjectURL(original);
+      }
+    });
+
+    return result;
   }
 
   async save(): Promise<void> {
@@ -136,18 +171,24 @@ export default class ImageRecord {
       this.originalId = await imageDB.storeMedia(this.originalCache, this.originalId || undefined);
     }
 
-    if (this.editedState === ImageState.CHANGED && this.editedCache !== null) {
+    if (this.editedState === ImageState.OUT_OF_DATE) {
+      this.editedCache = await this.drawFiltered();
+      this.editedId = await imageDB.storeMedia(this.editedCache, this.editedId || undefined);
+    } else if (this.editedState === ImageState.CHANGED && this.editedCache !== null) {
       this.editedId = await imageDB.storeMedia(this.editedCache, this.editedId || undefined);
     }
 
-    if (this.thumbnailState === ImageState.CHANGED && this.thumbnailCache !== null) {
+    if (this.thumbnailState === ImageState.OUT_OF_DATE) {
+      this.thumbnailCache = await this.drawFiltered(200);
+      this.thumbnailId = await imageDB.storeMedia(this.thumbnailCache, this.thumbnailId || undefined);
+    } else if (this.thumbnailState === ImageState.CHANGED && this.thumbnailCache !== null) {
       this.thumbnailId = await imageDB.storeMedia(this.thumbnailCache, this.thumbnailId || undefined);
     }
 
-    let transformRecord: {[name: string]: number} = {};
+    let transformRecord: INumDict = {};
 
-    if (this.transform) {
-      transformRecord = {...this.transform};
+    if (this.$transform) {
+      transformRecord = {...this.$transform};
     }
 
     this.id = await imageDB.storeRecord({

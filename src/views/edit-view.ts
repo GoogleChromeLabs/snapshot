@@ -11,22 +11,16 @@
   limitations under the License.
 */
 
-import constants from '../constants';
-import fragmentShader from '../filters/filter-fragment-shader.glsl';
 import FilterTransform from '../filters/filter-transform';
-import ImageShader from '../filters/image-shader';
 import {NamedFilter, namedFilters} from '../filters/named-filter';
 import ImageRecord from '../image-record';
-import {canvasToBlob} from '../promise-helpers';
 import router from '../router';
 import ViewState from '../view-state';
 import View from './view';
 
 export default class EditView extends View {
-  private destElement: HTMLDivElement;
+  private destElement: HTMLCanvasElement;
   private sourceElement: HTMLImageElement | null;
-  private sourceWidth: number;
-  private sourceHeight: number;
   private closeButton: HTMLButtonElement;
   private acceptButton: HTMLButtonElement;
   private sliders: Map<string, HTMLInputElement>;
@@ -36,7 +30,6 @@ export default class EditView extends View {
   private filterSection: HTMLDivElement;
   private tuneSection: HTMLDivElement;
   private animationFrame: number;
-  private imageShader: ImageShader;
   private currentRecord: ImageRecord | null;
   private currentPanel: Element | null;
   private transform: FilterTransform;
@@ -44,7 +37,7 @@ export default class EditView extends View {
   constructor() {
     super(document.getElementById('edit-view')!);
 
-    this.destElement = document.getElementById('edit-dest')! as HTMLDivElement;
+    this.destElement = document.getElementById('edit-dest')! as HTMLCanvasElement;
     this.closeButton = document.getElementById('edit-view-close')! as HTMLButtonElement;
     this.acceptButton = document.getElementById('edit-view-accept')! as HTMLButtonElement;
     this.filterSectionButton = document.getElementById('edit-select-filters')! as HTMLButtonElement;
@@ -97,12 +90,7 @@ export default class EditView extends View {
       effectButton.addEventListener('click', () => this.effectButtonClick(effectButton));
     }
 
-    this.imageShader = new ImageShader();
-    this.imageShader.setFragmentShader(fragmentShader);
     this.sourceElement = null;
-    this.sourceWidth = 0;
-    this.sourceHeight = 0;
-    this.destElement.appendChild(this.imageShader.canvas);
 
     this.currentPanel = null;
     this.currentRecord = null;
@@ -127,9 +115,7 @@ export default class EditView extends View {
     this.sourceElement = source;
     source.onload = () => {
       URL.revokeObjectURL(source.src);
-      this.imageShader.setImage(source);
-      this.sourceWidth = source.naturalWidth;
-      this.sourceHeight = source.naturalHeight;
+      this.transform.apply(source, this.destElement);
       this.animationFrame = requestAnimationFrame(() => this.draw());
       this.renderThumbnails();
     };
@@ -165,17 +151,6 @@ export default class EditView extends View {
     if (!this.sourceElement) {
       return;
     }
-    const aspectRatio = this.sourceWidth / this.sourceHeight;
-
-    const thumbnail = document.createElement('canvas');
-    thumbnail.height = 100 * devicePixelRatio;
-    thumbnail.width = thumbnail.height * aspectRatio;
-    thumbnail.getContext('2d')!.drawImage(this.sourceElement, 0, 0, thumbnail.width, thumbnail.height);
-    const thumbShader = new ImageShader();
-    thumbShader.setFragmentShader(fragmentShader);
-    thumbShader.setImage(thumbnail);
-
-    const relativeSize = thumbnail.height / this.sourceHeight;
 
     for (const filter of namedFilters) {
       const output =
@@ -184,26 +159,7 @@ export default class EditView extends View {
         console.error(`No output thumbnail for filter ${filter.name}`);
       } else {
         setTimeout(() => {
-          output.width = thumbnail.width;
-          output.height = thumbnail.height;
-          const context = output.getContext('2d') as CanvasRenderingContext2D;
-          thumbShader.setUniform('sourceSize', new Float32Array([1 / thumbnail.width, 1 / thumbnail.height]));
-
-          const transform = filter.values;
-          // Reduce the blur value relative to the size of the thumbnail
-          thumbShader.setUniform('blur', relativeSize * transform.blur);
-          thumbShader.setUniform('brightness', transform.brightness);
-          thumbShader.setUniform('contrast', transform.contrast);
-          thumbShader.setUniform('grey', transform.grey);
-          thumbShader.setUniform('saturation', transform.saturation);
-          thumbShader.setUniform('sharpen', transform.sharpen);
-          thumbShader.setUniform('vignette', transform.vignette);
-          thumbShader.setUniform('warmth', transform.warmth);
-          thumbShader.render();
-          context.drawImage(
-            thumbShader.canvas,
-            0, 0, thumbShader.canvas.width, thumbShader.canvas.height,
-            0, 0, output.width, output.height);
+          filter.values.apply(this.sourceElement!, output, 100);
         }, 0);
       }
     }
@@ -225,19 +181,11 @@ export default class EditView extends View {
   }
 
   private draw() {
-    const canvas = this.imageShader.canvas;
-    canvas.width = this.sourceWidth;
-    canvas.height = this.sourceHeight;
-
-    this.imageShader.setUniform('sourceSize', new Float32Array([1 / canvas.width, 1 / canvas.height]));
-
-    for (const [name, value] of Object.entries(this.transform)) {
-      this.imageShader.setUniform(name, value);
+    if (this.sourceElement) {
+      this.transform.apply(this.sourceElement, this.destElement);
     }
 
     this.animationFrame = 0;
-
-    this.imageShader.render();
   }
 
   private filterButtonClick(filter: NamedFilter) {
@@ -278,16 +226,10 @@ export default class EditView extends View {
   }
 
   private async save(): Promise<void> {
-    if (!this.currentRecord) {
-      return;
+    if (this.currentRecord) {
+      this.currentRecord.transform = this.transform;
+      this.currentRecord.save();
     }
-
-    this.draw();
-    const blob = await canvasToBlob(this.imageShader.canvas, constants.IMAGE_TYPE);
-
-    this.currentRecord.setEdited(blob);
-    this.currentRecord.transform = this.transform;
-    this.currentRecord.save();
   }
 
   private closeClick() {
