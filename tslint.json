@@ -5,6 +5,7 @@
 		"no-console": [false],
 		"member-access": [false],
 		"max-classes-per-file": [false],
-		"no-bitwise": false
+		"no-bitwise": false,
+		"forin": false
 	}
 }
