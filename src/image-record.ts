@@ -45,6 +45,10 @@ export default class ImageRecord {
 
     result.transform = FilterTransform.from(data.transform);
 
+    result.localImageChanges = data.localImageChanges;
+    result.localFilterChanges = data.localFilterChanges;
+    result.lastSyncVersion = data.lastSyncVersion;
+
     return result;
   }
 
@@ -70,6 +74,10 @@ export default class ImageRecord {
   editedId: number | null;
   thumbnailId: number | null;
 
+  localImageChanges: boolean;
+  localFilterChanges: boolean;
+  lastSyncVersion: number;
+
   private $transform: FilterTransform | null;
 
   private originalCache: Blob | null;
@@ -90,6 +98,10 @@ export default class ImageRecord {
 
     this.$transform = null;
 
+    this.localImageChanges = true;
+    this.localFilterChanges = true;
+    this.lastSyncVersion = -1;
+
     this.originalCache = null;
     this.editedCache = null;
     this.thumbnailCache = null;
@@ -103,6 +115,7 @@ export default class ImageRecord {
     this.$transform = value;
     this.editedState = ImageState.OUT_OF_DATE;
     this.thumbnailState = ImageState.OUT_OF_DATE;
+    this.localFilterChanges = true;
   }
 
   async getOriginal(): Promise<Blob | null> {
@@ -143,6 +156,24 @@ export default class ImageRecord {
     this.originalState = ImageState.CHANGED;
     this.editedState = ImageState.OUT_OF_DATE;
     this.thumbnailState = ImageState.OUT_OF_DATE;
+    this.localImageChanges = true;
+  }
+
+  async delete() {
+    if (!this.id) {
+      return;
+    }
+    const mediaIds: number[] = [];
+    if (this.originalId) {
+      mediaIds.push(this.originalId);
+    }
+    if (this.editedId) {
+      mediaIds.push(this.editedId);
+    }
+    if (this.thumbnailId) {
+      mediaIds.push(this.thumbnailId);
+    }
+    return imageDB.deleteRecord(this.id, mediaIds);
   }
 
   async drawFiltered(height?: number): Promise<Blob> {
@@ -195,6 +226,9 @@ export default class ImageRecord {
       editedId: this.editedId,
       guid: this.guid,
       id: this.id,
+      lastSyncVersion: this.lastSyncVersion,
+      localFilterChanges: this.localFilterChanges,
+      localImageChanges: this.localImageChanges,
       originalId: this.originalId,
       thumbnailId: this.thumbnailId,
       transform: transformRecord,

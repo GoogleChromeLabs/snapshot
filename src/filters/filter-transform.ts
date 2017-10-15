@@ -25,18 +25,18 @@ const random = (min: number, max: number): number => {
 };
 
 export default class FilterTransform {
-  static from(data: {[name: string]: number} | null) {
+  static from(data: IStringDict | INumDict | null) {
     const result = new FilterTransform();
 
     if (data) {
-      result.saturation = data.saturation || result.saturation;
-      result.warmth = data.warmth || result.warmth;
-      result.sharpen = data.sharpen || result.sharpen;
-      result.blur = data.blur || result.blur;
-      result.brightness = data.brightness || result.brightness;
-      result.contrast = data.contrast || result.contrast;
-      result.grey = data.grey || result.grey;
-      result.vignette = data.vignette || result.vignette;
+      result.saturation = Number(data.saturation) || result.saturation;
+      result.warmth = Number(data.warmth) || result.warmth;
+      result.sharpen = Number(data.sharpen) || result.sharpen;
+      result.blur = Number(data.blur) || result.blur;
+      result.brightness = Number(data.brightness) || result.brightness;
+      result.contrast = Number(data.contrast) || result.contrast;
+      result.grey = Number(data.grey) || result.grey;
+      result.vignette = Number(data.vignette) || result.vignette;
     }
 
     return result;

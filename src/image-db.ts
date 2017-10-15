@@ -24,6 +24,10 @@ export interface IListRecord {
   thumbnailId: number | null;
 
   transform: INumDict | null;
+
+  localFilterChanges: boolean;
+  localImageChanges: boolean;
+  lastSyncVersion: number;
 }
 
 interface IMediaRecord {
@@ -79,6 +83,24 @@ class ImageDB {
 
         get.onsuccess = (event) => resolve(get.result);
         get.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  deleteRecord(id: number, mediaIds: number[] = []): Promise<void> {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['list', 'media'], 'readwrite');
+
+        for (const mediaId of mediaIds) {
+          transaction.objectStore('media').delete(mediaId);
+        }
+        transaction.objectStore('list').delete(id);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = reject;
       }).catch(reject);
     });
 

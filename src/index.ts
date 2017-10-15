@@ -13,6 +13,7 @@
 
 import router from './router';
 import {resume} from './sync/auth';
+import {syncStart} from './sync/sync';
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
@@ -21,3 +22,4 @@ if ('serviceWorker' in navigator) {
 router.changeHandler();
 
 resume();
+syncStart();
