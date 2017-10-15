@@ -166,9 +166,39 @@
         display: block;
       }
 
-      #browse-list .element {
-        width: 50%;
-        position: relative;
+      @media (max-width: 400px) {
+        #browse-list .element {
+          width: 100%;
+          position: relative;
+        }
+      }
+
+      @media (min-width: 400px) and (max-width: 800px) {
+        #browse-list .element {
+          width: 50%;
+          position: relative;
+        }
+      }
+
+      @media (min-width: 800px) and (max-width: 1200px) {
+        #browse-list .element {
+          width: 33.33%;
+          position: relative;
+        }
+      }
+
+      @media (min-width: 1200px) and (max-width: 1600px) {
+        #browse-list .element {
+          width: 25%;
+          position: relative;
+        }
+      }
+
+      @media (min-width: 1600px) {
+        #browse-list .element {
+          width: 20%;
+          position: relative;
+        }
       }
 
       #browse-list .element * {
