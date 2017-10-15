@@ -11,7 +11,13 @@
   limitations under the License.
 */
 
+// These two lines are here to stop TypeScript from complaining about service
+// worker APIs
+const scope: ServiceWorkerGlobalScope = (self as any) as ServiceWorkerGlobalScope;
+const {clients} = scope;
+
 const VERSION = 2;
+console.log(`SW Version ${VERSION}`);
 
 const FILES = [
   '/app.min.js',
@@ -21,29 +27,25 @@ const FILES = [
   '/icons/icon-512.png',
 ];
 
-self.addEventListener('install', (event) => {
+scope.addEventListener('install', (event: InstallEvent) => {
   event.waitUntil(installHandler(event));
 });
 
-self.addEventListener('activate', (event) => {
+scope.addEventListener('activate', (event: ActivateEvent) => {
   clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
+scope.addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(fetchHandler(event.request));
 });
 
-async function installHandler(event) {
+async function installHandler(event: InstallEvent) {
   const cache = await caches.open('snapshot');
   cache.addAll(FILES);
-  self.skipWaiting();
+  scope.skipWaiting();
 }
 
-/**
- * @param {Request} request
- * @return {Response}
- */
-async function fetchHandler(request) {
+async function fetchHandler(request: Request): Promise<Response> {
   if (request.mode === 'navigate') {
     const url = new URL(request.url);
     if (url.origin === location.origin) {
@@ -51,6 +53,14 @@ async function fetchHandler(request) {
     }
   }
 
+  if (request.method !== 'GET') {
+    return fetch(request);
+  }
+
+  return cacheFirst(request);
+}
+
+async function cacheFirst(request: Request) {
   const cache = await caches.open('snapshot');
   const cacheResult = await cache.match(request);
 
@@ -64,3 +74,25 @@ async function fetchHandler(request) {
   }
   return fetchResult;
 }
+
+async function networkFirst(request: Request) {
+  const cache = await caches.open('snapshot');
+
+  let fetchResult = await fetch(request);
+
+  try {
+    fetchResult = await fetch(request);
+  } catch (e) {
+    console.log(`Fetch error: ${e}`);
+  }
+
+  if (fetchResult) {
+    if (fetchResult.ok) {
+      cache.put(request, fetchResult.clone());
+    }
+    return fetchResult;
+  }
+
+  return cache.match(request);
+}
+
