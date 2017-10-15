@@ -12,6 +12,7 @@
 */
 
 export default {
+  CLIENT_ID: '151109002640-6hsca3c8lv5eutorkavk157rle1rjsgt.apps.googleusercontent.com',
   IMAGE_TYPE: 'image/jpeg',
   SUPPORTS_IMAGE_CAPTURE: 'ImageCapture' in window,
   SUPPORTS_MEDIA_DEVICES: 'mediaDevices' in navigator,

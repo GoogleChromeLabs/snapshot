@@ -11,6 +11,7 @@
   limitations under the License.
 */
 
+import {validate} from './sync/auth';
 import ViewState from './view-state';
 import BrowseView from './views/browse-view';
 import CaptureView from './views/capture-view';
@@ -72,6 +73,11 @@ class Router {
       case 'upload':
         newView = this.uploadView;
         break;
+      case 'oauth':
+        this.handleOAuth().then(() => {
+          this.visit('/');
+        });
+        return;
       default:
         // TODO: Proper 404
         console.log('404');
@@ -119,6 +125,20 @@ class Router {
 
     event.preventDefault();
     this.visit(anchor.href);
+  }
+
+  handleOAuth() {
+    const hash = window.location.hash;
+    const parts = hash.substring(1).split('&');
+    let accessToken = '';
+
+    for (const part of parts) {
+      const [key, value] = part.split('=');
+      if (key === 'access_token') {
+        accessToken = value;
+      }
+    }
+    return validate(accessToken);
   }
 }
 

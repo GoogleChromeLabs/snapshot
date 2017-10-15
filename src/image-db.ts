@@ -13,7 +13,7 @@
 
 import {blobToArrayBuffer} from './promise-helpers';
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export interface IListRecord {
   id: number | null;
@@ -122,6 +122,31 @@ class ImageDB {
     return promise;
   }
 
+  setMeta(key: string, value: any): Promise<void> {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['metadata'], 'readwrite');
+        const put = transaction.objectStore('metadata').put(value, key);
+        put.onsuccess = () => resolve();
+        put.onerror = reject;
+      }).catch(reject);
+    });
+    return promise;
+  }
+
+  getMeta(key: string): Promise<any> {
+    const promise: Promise<any> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['metadata'], 'readonly');
+        const get = transaction.objectStore('metadata').get(key);
+        get.onsuccess = () => resolve(get.result);
+        get.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
   all(): Promise<IListRecord[]> {
     const promise: Promise<IListRecord[]> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
@@ -161,11 +186,17 @@ class ImageDB {
     const request: IDBOpenDBRequest = event.target as IDBOpenDBRequest;
     const db: IDBDatabase = request.result;
 
-    db.createObjectStore('media', {autoIncrement: true});
-    db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
+    if (event.oldVersion < 3) {
+      if (event.oldVersion !== 0) {
+        db.deleteObjectStore('images');
+      }
 
-    if (event.oldVersion !== 0) {
-      db.deleteObjectStore('images');
+      db.createObjectStore('media', {autoIncrement: true});
+      db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
+    }
+
+    if (event.oldVersion < 4) {
+      db.createObjectStore('metadata');
     }
   }
 }

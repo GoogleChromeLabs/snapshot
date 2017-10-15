@@ -220,6 +220,49 @@
         background-color: white;
       }
 
+      #login-bar {
+        height: 40px;
+        background-color: #535353;
+        box-shadow: 1px 3px 10px black;
+      }
+
+      #login-bar .login-status {
+        padding: 10px;
+        display: none;
+      }
+
+      #login-bar.logged-out .login-status.logged-out {
+        display: initial;
+      }
+
+      #login-bar.logged-in .login-status.logged-in {
+        display: initial;
+      }
+
+      #login-bar .login-status button {
+        background-color: #2196F3;
+        box-shadow: black 1px 2px;
+        overflow: hidden;
+        border: none;
+        color: white;
+        padding: 8px;
+        width: auto;
+        height: auto;
+        border-radius: 4px;
+      }
+
+      .login-status button:hover, .login-status button:focus {
+        background-color: #d0d0d0;
+        outline: 0;
+      }
+
+      #user-image {
+        width: 35px;
+        border-radius: 50%;
+        padding: 20px;
+        vertical-align: middle;
+      }
+
       /* Capture */
 
       #capture-view video.mirror {
@@ -593,6 +636,14 @@
     <!-- Browse -->
 
     <div class="view-element hidden" id="browse-view">
+      <div id="login-bar" class="toolbar right logged-out">
+        <div class="login-status logged-in">
+          <span id="user-name"></span>
+          <img id="user-image" />
+          <button id="logout-button">Log out</button>
+        </div>
+        <div class="login-status logged-out"><button id="login-button">Log in</button></div>
+      </div>
       <div id="empty-browse-list">
         <svg viewBox="0 0 24 21">
           <use xlink:href="#svg-photo-camera">

@@ -57,6 +57,10 @@ async function fetchHandler(request: Request): Promise<Response> {
     return fetch(request);
   }
 
+  if (request.url.match(/googleapis.com/)) {
+    return networkFirst(request);
+  }
+
   return cacheFirst(request);
 }
 

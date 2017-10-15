@@ -13,12 +13,19 @@
 
 import constants from '../constants';
 import ImageRecord from '../image-record';
+import pubsub from '../pubsub';
 import router from '../router';
+import {login, logout, user} from '../sync/auth';
 import View from './view';
 
 export default class BrowseView extends View {
   private captureButton: HTMLButtonElement;
   private uploadButton: HTMLButtonElement;
+  private loginButton: HTMLButtonElement;
+  private logoutButton: HTMLButtonElement;
+  private loginBar: HTMLElement;
+  private userName: HTMLSpanElement;
+  private userImage: HTMLImageElement;
   private emptyListElement: HTMLElement;
   private listElement: HTMLElement;
   private blobURLs: Set<string>;
@@ -28,8 +35,13 @@ export default class BrowseView extends View {
 
     this.captureButton = document.getElementById('browse-capture-button') as HTMLButtonElement;
     this.uploadButton = document.getElementById('browse-upload-button') as HTMLButtonElement;
-    this.emptyListElement = document.getElementById('empty-browse-list') as HTMLButtonElement;
-    this.listElement = document.getElementById('browse-list') as HTMLButtonElement;
+    this.loginButton = document.getElementById('login-button') as HTMLButtonElement;
+    this.logoutButton = document.getElementById('logout-button') as HTMLButtonElement;
+    this.loginBar = document.getElementById('login-bar')!;
+    this.userName = document.getElementById('user-name')!;
+    this.userImage = document.getElementById('user-image') as HTMLImageElement;
+    this.emptyListElement = document.getElementById('empty-browse-list')!;
+    this.listElement = document.getElementById('browse-list')!;
 
     if (!constants.SUPPORTS_MEDIA_DEVICES) {
       this.captureButton.classList.add('hidden');
@@ -37,8 +49,13 @@ export default class BrowseView extends View {
 
     this.captureButton.addEventListener('click', () => this.captureClick());
     this.uploadButton.addEventListener('click', () => this.uploadClick());
+    this.loginButton.addEventListener('click', () => this.loginClick());
+    this.logoutButton.addEventListener('click', () => this.logoutClick());
 
     this.blobURLs = new Set();
+
+    pubsub.subscribe('login', () => this.authChanged());
+    pubsub.subscribe('logout', () => this.authChanged());
   }
 
   async show() {
@@ -93,5 +110,25 @@ export default class BrowseView extends View {
 
   uploadClick() {
     router.visit('/upload');
+  }
+
+  loginClick() {
+    login();
+  }
+
+  logoutClick() {
+    logout();
+  }
+
+  authChanged() {
+    if (user.id === '') {
+      this.loginBar.classList.remove('logged-in');
+      this.loginBar.classList.add('logged-out');
+    } else {
+      this.loginBar.classList.add('logged-in');
+      this.loginBar.classList.remove('logged-out');
+      this.userName.innerText = user.name;
+      this.userImage.src = user.imageURL;
+    }
   }
 }
