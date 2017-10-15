@@ -16,6 +16,11 @@
 const scope: ServiceWorkerGlobalScope = (self as any) as ServiceWorkerGlobalScope;
 const {clients} = scope;
 
+import {IListRecord, imageDB, ISyncRecord} from '../image-db';
+import {resume} from '../sync/auth';
+import {getFileMeta} from '../sync/google-drive';
+import {ChangeType, downloadRemote, IChangeEvent, uploadLocal} from '../sync/sync';
+
 const VERSION = 2;
 console.log(`SW Version ${VERSION}`);
 
@@ -37,6 +42,10 @@ scope.addEventListener('activate', (event: ActivateEvent) => {
 
 scope.addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(fetchHandler(event.request));
+});
+
+scope.addEventListener('sync', (event: SyncEvent) => {
+  event.waitUntil(syncHandler());
 });
 
 async function installHandler(event: InstallEvent) {
@@ -100,3 +109,45 @@ async function networkFirst(request: Request) {
   return cache.match(request);
 }
 
+async function syncHandler() {
+  await resume();
+  const syncs = await imageDB.listSync();
+  for (const sync of syncs) {
+    doSync(sync);
+  }
+}
+
+async function doSync(sync: ISyncRecord) {
+  // TODO: Need to somehow lock the sync record..? So that we don't add
+  // the item again during a sync, or upload the same thing twice
+  let local: IListRecord | undefined;
+  let remote: DriveFile | undefined;
+
+  if (sync.id) {
+    local = await imageDB.retrieveRecord(sync.id);
+  }
+
+  if (sync.guid) {
+    remote = await getFileMeta(sync.guid);
+  }
+
+  if (local && sync.upload) {
+    await uploadLocal(local, local.localImageChanges, remote);
+  } else if (remote && !sync.upload) {
+    const localId = await downloadRemote(remote, true, local);
+    if (localId) {
+      sendMessage({id: localId, type: ChangeType.ADD});
+    }
+  }
+  imageDB.removeSync(sync.id, sync.guid);
+}
+
+async function sendMessage(change: IChangeEvent) {
+  const windows = await clients.matchAll({
+    includeUncontrolled: false,
+    type: 'window',
+  });
+  for (const client of windows) {
+    client.postMessage({channel: 'sync', data: change});
+  }
+}

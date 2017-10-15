@@ -11,10 +11,20 @@
   limitations under the License.
 */
 
+/*
+  NOTE: This file gets included by the service worker. To prevent the service
+  worker from transitively including a lot of code (particularly around WebGL)
+  that it doesn't really need, this file does NOT use the ImageRecord or
+  FilterTransform wrapper classes. It directly uses the database features
+  instead.
+
+  TODO: In the future it might be nice to make the split at a higher level of
+  abstraction, like having a service worker friendly `BaseImageRecord` or
+  something.
+*/
+
 import constants from '../constants';
-import FilterTransform from '../filters/filter-transform';
-import {imageDB} from '../image-db';
-import ImageRecord from '../image-record';
+import {IListRecord, imageDB} from '../image-db';
 import pubsub from '../pubsub';
 import {user} from './auth';
 import {createFileMeta, driveRequest, folderList, getFileContent,
@@ -45,9 +55,14 @@ export interface IChangeEvent {
   sort of cloud-based process.)
 */
 
-export function syncStart() {
+function syncStart() {
   syncFiles();
   setInterval(syncFiles, constants.SYNC_FREQUENCY + 1000);
+}
+
+// Don't want to start trying to sync from inside the service worker
+if ('window' in self) {
+  pubsub.subscribe('login', syncStart);
 }
 
 export async function getSnapshotFolder(): Promise<DriveFile> {
@@ -84,19 +99,24 @@ export async function syncFiles() {
     return;
   }
 
+  let registration: ServiceWorkerRegistration | undefined;
+  if (constants.SUPPORTS_BGSYNC) {
+    registration = await navigator.serviceWorker.getRegistration();
+  }
+
   // Get the remote list of files
   const folder = await getSnapshotFolder();
   const files = await folderList(folder.id!);
   const remoteOnly: Map<string, DriveFile> = new Map();
-  const localOnly: Set<ImageRecord> = new Set();
-  const links: Map<DriveFile, ImageRecord> = new Map();
+  const localOnly: Set<IListRecord> = new Set();
+  const links: Map<DriveFile, IListRecord> = new Map();
   for (const file of files) {
     if (!file.id) {
       continue;
     }
     remoteOnly.set(file.id, file);
   }
-  for (const record of await ImageRecord.getAll()) {
+  for (const record of await imageDB.all()) {
     if (remoteOnly.has(record.guid)) {
       links.set(remoteOnly.get(record.guid)!, record);
       remoteOnly.delete(record.guid);
@@ -105,53 +125,123 @@ export async function syncFiles() {
     }
   }
 
-  for (const remote of remoteOnly.values()) {
-    if (remote.trashed) {
-      continue;
+  if (registration) {
+    // Going to use background sync
+    for (const remote of remoteOnly.values()) {
+      if (remote.trashed) {
+        continue;
+      }
+      imageDB.addSync({id: 0, guid: remote.id!, upload: false, includeMedia: true});
     }
-    downloadRemote(remote, true);
-  }
 
-  // Upload local only
-  for (const local of localOnly) {
-    uploadLocal(local, local.localImageChanges);
-  }
+    for (const local of localOnly) {
+      imageDB.addSync({id: local.id!, guid: '', upload: true, includeMedia: true});
+    }
 
-  for (const [remote, local] of links) {
-    if (remote.trashed) {
-      // Remote was deleted, delete local too
-      pubsub.publish({channel: 'sync', data: {type: ChangeType.REMOVE, id: local.id!}});
-      local.delete();
-    } else if (local.localImageChanges || local.localFilterChanges) {
-      uploadLocal(local, local.localImageChanges, remote);
-    } else if (local.lastSyncVersion < remote.version!) {
-      downloadRemote(remote, true, local);
+    for (const [remote, local] of links) {
+      if (remote.trashed) {
+        // Remote was deleted, delete local too
+        pubsub.publish({channel: 'sync', data: {type: ChangeType.REMOVE, id: local.id!}});
+        deleteLocal(local);
+      } else if (local.localFilterChanges || local.localImageChanges) {
+        imageDB.addSync({
+          guid: remote.id!,
+          id: local.id!,
+          includeMedia: local.localImageChanges,
+          upload: true,
+        });
+      } else if (local.lastSyncVersion < remote.version!) {
+        imageDB.addSync({id: local.id!, guid: remote.id!, upload: false, includeMedia: true});
+      }
+    }
+
+    registration.sync.register('sync');
+  } else {
+    // Using direct download
+    for (const remote of remoteOnly.values()) {
+      if (remote.trashed) {
+        continue;
+      }
+      downloadRemote(remote, true);
+    }
+
+    // Upload local only
+    for (const local of localOnly) {
+      uploadLocal(local, local.localImageChanges);
+    }
+
+    for (const [remote, local] of links) {
+      if (remote.trashed) {
+        // Remote was deleted, delete local too
+        pubsub.publish({channel: 'sync', data: {type: ChangeType.REMOVE, id: local.id!}});
+        deleteLocal(local);
+      } else if (local.localImageChanges || local.localFilterChanges) {
+        uploadLocal(local, local.localImageChanges, remote);
+      } else if (local.lastSyncVersion < remote.version!) {
+        downloadRemote(remote, true, local);
+      }
     }
   }
 
   imageDB.setMeta('lastSyncTime', Date.now());
 }
 
+export async function deleteLocal(local: IListRecord) {
+  const mediaIds: number[] = [];
+  if (local.originalId) {
+    mediaIds.push(local.originalId);
+  }
+  if (local.editedId) {
+    mediaIds.push(local.editedId);
+  }
+  if (local.thumbnailId) {
+    mediaIds.push(local.thumbnailId);
+  }
+  imageDB.deleteRecord(local.id!, mediaIds);
+}
+
 export async function
-downloadRemote(remote: DriveFile, includeMedia: boolean, local?: ImageRecord): Promise<number | undefined> {
+downloadRemote(remote: DriveFile, includeMedia: boolean, local?: IListRecord): Promise<number | undefined> {
   if (!remote.id) {
     return;
   }
+  // TODO: Only download the media if it actually changed - this function would
+  // be called for a simple filter change, too.
   const original = await getFileContent(remote.id);
 
   if (original) {
-    const record = local || new ImageRecord();
+    const record: IListRecord = local || {
+      editedId: null,
+      guid: '',
+      id: null,
+      lastSyncVersion: -1,
+      localFilterChanges: false,
+      localImageChanges: false,
+      originalId: null,
+      thumbnailId: null,
+      transform: {},
+    };
     record.guid = remote.id;
-    record.setOriginal(original);
 
     if (remote.appProperties) {
-      record.transform = FilterTransform.from(remote.appProperties);
+      const data = remote.appProperties;
+      const transform = record.transform || {};
+      transform.saturation = Number(data.saturation) || transform.saturation;
+      transform.warmth = Number(data.warmth) || transform.warmth;
+      transform.sharpen = Number(data.sharpen) || transform.sharpen;
+      transform.blur = Number(data.blur) || transform.blur;
+      transform.brightness = Number(data.brightness) || transform.brightness;
+      transform.contrast = Number(data.contrast) || transform.contrast;
+      transform.grey = Number(data.grey) || transform.grey;
+      transform.vignette = Number(data.vignette) || transform.vignette;
+      record.transform = transform;
     }
 
     record.localFilterChanges = false;
     record.localImageChanges = false;
     record.lastSyncVersion = remote.version!;
-    await record.save();
+    record.originalId = await imageDB.storeMedia(original);
+    await imageDB.storeRecord(record);
     pubsub.publish({channel: 'sync', data: {type: ChangeType.ADD, id: record.id!}});
     return record.id!;
   } else {
@@ -160,8 +250,11 @@ downloadRemote(remote: DriveFile, includeMedia: boolean, local?: ImageRecord): P
   return;
 }
 
-export async function uploadLocal(local: ImageRecord, includeMedia: boolean, remote?: DriveFile) {
-  const original = await local.getOriginal();
+export async function uploadLocal(local: IListRecord, includeMedia: boolean, remote?: DriveFile) {
+  if (!local.originalId) {
+    return;
+  }
+  const original = await imageDB.retrieveMedia(local.originalId);
   if (!original) {
     return;
   }
@@ -208,5 +301,5 @@ export async function uploadLocal(local: ImageRecord, includeMedia: boolean, rem
     local.localImageChanges = false;
   }
   local.localFilterChanges = false;
-  return local.save();
+  return imageDB.storeRecord(local);
 }
