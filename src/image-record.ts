@@ -15,9 +15,9 @@ import FilterTransform from './filters/filter-transform';
 import {IListRecord, imageDB} from './image-db';
 
 enum ImageState {
-  NotLoaded,
-  Loaded,
-  Changed,
+  NOT_LOADED,
+  LOADED,
+  CHANGED,
 }
 
 export default class ImageRecord {
@@ -32,9 +32,9 @@ export default class ImageRecord {
     result.id = data.id;
     result.guid = data.guid;
 
-    result.originalState = ImageState.NotLoaded;
-    result.editedState = ImageState.NotLoaded;
-    result.thumbnailState = ImageState.NotLoaded;
+    result.originalState = ImageState.NOT_LOADED;
+    result.editedState = ImageState.NOT_LOADED;
+    result.thumbnailState = ImageState.NOT_LOADED;
 
     result.originalId = data.originalId;
     result.editedId = data.editedId;
@@ -77,9 +77,9 @@ export default class ImageRecord {
     this.id = null;
     this.guid = '';
 
-    this.originalState = ImageState.Changed;
-    this.editedState = ImageState.Changed;
-    this.thumbnailState = ImageState.Changed;
+    this.originalState = ImageState.CHANGED;
+    this.editedState = ImageState.CHANGED;
+    this.thumbnailState = ImageState.CHANGED;
 
     this.originalId = null;
     this.editedId = null;
@@ -93,27 +93,27 @@ export default class ImageRecord {
   }
 
   async getOriginal(): Promise<Blob | null> {
-    if (this.originalId && this.originalState === ImageState.NotLoaded) {
+    if (this.originalId && this.originalState === ImageState.NOT_LOADED) {
       this.originalCache = await imageDB.retrieveMedia(this.originalId);
-      this.originalState = ImageState.Loaded;
+      this.originalState = ImageState.LOADED;
     }
 
     return this.originalCache;
   }
 
   async getEdited(): Promise<Blob | null> {
-    if (this.editedId && this.editedState === ImageState.NotLoaded) {
+    if (this.editedId && this.editedState === ImageState.NOT_LOADED) {
       this.editedCache = await imageDB.retrieveMedia(this.editedId);
-      this.editedState = ImageState.Loaded;
+      this.editedState = ImageState.LOADED;
     }
 
     return this.editedCache || this.getOriginal();
   }
 
   async getThumbnail(): Promise<Blob | null> {
-    if (this.thumbnailId && this.thumbnailState === ImageState.NotLoaded) {
+    if (this.thumbnailId && this.thumbnailState === ImageState.NOT_LOADED) {
       this.thumbnailCache = await imageDB.retrieveMedia(this.thumbnailId);
-      this.thumbnailState = ImageState.Loaded;
+      this.thumbnailState = ImageState.LOADED;
     }
 
     return this.thumbnailCache || this.getEdited();
@@ -122,25 +122,25 @@ export default class ImageRecord {
   setOriginal(media: Blob) {
     // TODO: If we set the original, we should wipe out/delete any edited/thumbnail versions too.
     this.originalCache = media;
-    this.originalState = ImageState.Changed;
+    this.originalState = ImageState.CHANGED;
   }
 
   setEdited(media: Blob) {
     // TODO: If we set the edited, we should wipe out/delete any thumbnail version too.
     this.editedCache = media;
-    this.editedState = ImageState.Changed;
+    this.editedState = ImageState.CHANGED;
   }
 
   async save(): Promise<void> {
-    if (this.originalState === ImageState.Changed && this.originalCache !== null) {
+    if (this.originalState === ImageState.CHANGED && this.originalCache !== null) {
       this.originalId = await imageDB.storeMedia(this.originalCache, this.originalId || undefined);
     }
 
-    if (this.editedState === ImageState.Changed && this.editedCache !== null) {
+    if (this.editedState === ImageState.CHANGED && this.editedCache !== null) {
       this.editedId = await imageDB.storeMedia(this.editedCache, this.editedId || undefined);
     }
 
-    if (this.thumbnailState === ImageState.Changed && this.thumbnailCache !== null) {
+    if (this.thumbnailState === ImageState.CHANGED && this.thumbnailCache !== null) {
       this.thumbnailId = await imageDB.storeMedia(this.thumbnailCache, this.thumbnailId || undefined);
     }
 
@@ -150,7 +150,7 @@ export default class ImageRecord {
       transformRecord = {...this.transform};
     }
 
-    const id = await imageDB.storeRecord({
+    this.id = await imageDB.storeRecord({
       editedId: this.editedId,
       guid: this.guid,
       id: this.id,
@@ -158,6 +158,5 @@ export default class ImageRecord {
       thumbnailId: this.thumbnailId,
       transform: transformRecord,
     });
-    this.id = id;
   }
 }

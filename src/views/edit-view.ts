@@ -278,14 +278,16 @@ export default class EditView extends View {
   }
 
   private async save(): Promise<void> {
+    if (!this.currentRecord) {
+      return;
+    }
+
     this.draw();
     const blob = await canvasToBlob(this.imageShader.canvas, constants.IMAGE_TYPE);
 
-    if (this.currentRecord) {
-      this.currentRecord.setEdited(blob);
-      this.currentRecord.transform = this.transform;
-      this.currentRecord.save();
-    }
+    this.currentRecord.setEdited(blob);
+    this.currentRecord.transform = this.transform;
+    this.currentRecord.save();
   }
 
   private closeClick() {
