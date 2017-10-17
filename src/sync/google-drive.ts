@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-import {user} from './auth';
+import {user, validate} from './auth';
 
 const DRIVE_API = 'https://www.googleapis.com/drive/v3/';
 const DRIVE_UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3/';
@@ -30,38 +30,43 @@ function makeURL(base: string, defaults: IStringDict, options?: IStringDict): st
   return url.toString();
 }
 
-export async function driveRequest(endpoint: string, options?: IStringDict, init: RequestInit = {}) {
+async function doFetch(url: string, init: RequestInit): Promise<Response> {
   if (!user.token) {
     throw new Error('Not logged in');
   }
+  const response = await fetch(url, init);
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      validate(user.token);
+    }
+    throw new Error(`Couldn't fetch Drive API result: ${response.statusText}`);
+  }
+  return response;
+}
+
+export async function driveRequest(endpoint: string, options?: IStringDict, init: RequestInit = {}) {
   const url = makeURL(`${DRIVE_API}${endpoint}`, {
     access_token: user.token,
   }, options);
-  const response = await fetch(url, init);
+  const response = await doFetch(url, init);
   return response.json();
 }
 
 async function driveMediaRequest(endpoint: string, options?: IStringDict, init: RequestInit = {}) {
-  if (!user.token) {
-    throw new Error('Not logged in');
-  }
   const url = makeURL(`${DRIVE_API}${endpoint}`, {
     access_token: user.token,
     alt: 'media',
   }, options);
-  const response = await fetch(url, init);
+  const response = await doFetch(url, init);
   return response.blob();
 }
 
 async function driveUploadRequest(endpoint: string, body: Blob) {
-  if (!user.token) {
-    throw new Error('Not logged in');
-  }
   const url = makeURL(`${DRIVE_UPLOAD_API}${endpoint}`, {
     access_token: user.token,
     uploadType: 'media',
   });
-  const response = await fetch(url, {method: 'PATCH', body});
+  const response = await doFetch(url, {method: 'PATCH', body});
   return response.json();
 }
 

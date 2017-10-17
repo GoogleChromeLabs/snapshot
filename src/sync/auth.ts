@@ -55,8 +55,7 @@ export async function validate(accessToken: string): Promise<void> {
   }
   const response = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
   if (!response.ok) {
-    user.token = '';
-    return;
+    return logout();
   }
   const json = await response.json();
   if (json.aud === constants.CLIENT_ID) {
@@ -67,7 +66,6 @@ export async function validate(accessToken: string): Promise<void> {
     user.imageURL = profile.image.url;
     user.token = accessToken;
     user.tokenExpiry = json.exp;
-    setTimeout(logout, json.expires_in * 1000);
     pubsub.publish({channel: 'login'});
     await imageDB.setMeta('token', accessToken);
     await imageDB.setMeta('tokenExpiry', json.exp);
