@@ -157,7 +157,7 @@
       #browse-list {
         display: flex;
         flex-wrap: wrap;
-        overflow-y: scroll;
+        overflow-y: auto;
       }
 
       #browse-list .element:after {
@@ -166,38 +166,32 @@
         display: block;
       }
 
-      @media (max-width: 400px) {
-        #browse-list .element {
-          width: 100%;
-          position: relative;
-        }
+      #browse-list .element {
+        width: 100%;
+        position: relative;
       }
 
       @media (min-width: 400px) and (max-width: 800px) {
         #browse-list .element {
           width: 50%;
-          position: relative;
         }
       }
 
       @media (min-width: 800px) and (max-width: 1200px) {
         #browse-list .element {
           width: 33.33%;
-          position: relative;
         }
       }
 
       @media (min-width: 1200px) and (max-width: 1600px) {
         #browse-list .element {
           width: 25%;
-          position: relative;
         }
       }
 
       @media (min-width: 1600px) {
         #browse-list .element {
           width: 20%;
-          position: relative;
         }
       }
 
@@ -231,11 +225,11 @@
         display: none;
       }
 
-      #login-bar.logged-out .login-status.logged-out {
+      #login-bar:not(.is-logged-in) .login-status.logged-out {
         display: initial;
       }
 
-      #login-bar.logged-in .login-status.logged-in {
+      #login-bar.is-logged-in .login-status.logged-in {
         display: initial;
       }
 
@@ -636,7 +630,7 @@
     <!-- Browse -->
 
     <div class="view-element hidden" id="browse-view">
-      <div id="login-bar" class="toolbar right logged-out">
+      <div id="login-bar" class="toolbar right">
         <div class="login-status logged-in">
           <span id="user-name"></span>
           <img id="user-image" />

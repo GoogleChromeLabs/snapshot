@@ -51,6 +51,6 @@ const pubsub = {
 if (navigator.serviceWorker) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     pubsub.publish(event.data);
-  }, false);
+  });
 }
 export default pubsub;

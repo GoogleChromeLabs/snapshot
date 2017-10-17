@@ -45,6 +45,8 @@ export function login() {
 export function logout() {
   user.token = '';
   pubsub.publish({channel: 'logout'});
+  imageDB.setMeta('token', '');
+  imageDB.setMeta('tokenExpiry', 0);
 }
 
 export async function validate(accessToken: string): Promise<void> {

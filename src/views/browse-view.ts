@@ -106,12 +106,10 @@ export default class BrowseView extends View {
   }
 
   authChanged() {
-    if (user.id === '') {
-      this.loginBar.classList.remove('logged-in');
-      this.loginBar.classList.add('logged-out');
+    if (user.token === '') {
+      this.loginBar.classList.remove('is-logged-in');
     } else {
-      this.loginBar.classList.add('logged-in');
-      this.loginBar.classList.remove('logged-out');
+      this.loginBar.classList.add('is-logged-in');
       this.userName.innerText = user.name;
       this.userImage.src = user.imageURL;
     }
