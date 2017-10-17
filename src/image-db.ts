@@ -159,72 +159,14 @@ class ImageDB {
 
   private createObjectStore(event: IDBVersionChangeEvent) {
     const request: IDBOpenDBRequest = event.target as IDBOpenDBRequest;
-    const transaction: IDBTransaction = request.transaction;
     const db: IDBDatabase = request.result;
 
-    // Added in version 3, so all paths need to create these stores
-    const mediaStore = db.createObjectStore('media', {autoIncrement: true});
-    const listStore = db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
+    db.createObjectStore('media', {autoIncrement: true});
+    db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
 
     if (event.oldVersion !== 0) {
-      // Can only recover from version 2, version 1 was too different
-      if (event.oldVersion === 2) {
-        this.upgrade2to3(mediaStore, listStore, transaction);
-      } else {
-        db.deleteObjectStore('images');
-      }
+      db.deleteObjectStore('images');
     }
-  }
-
-  private upgrade2to3(mediaStore: IDBObjectStore, listStore: IDBObjectStore, transaction: IDBTransaction) {
-    const originalStore = transaction.objectStore('images');
-
-    // Get all existing records, move them to correct places
-    const readRequest = originalStore.openCursor();
-    readRequest.onerror = (reason) => this.error(reason);
-    readRequest.onsuccess = () => {
-      const cursor = readRequest.result as IDBCursorWithValue;
-      if (cursor) {
-        interface IOldRecord {
-          id: number;
-          original: ArrayBuffer;
-          edited: ArrayBuffer | null;
-          thumbnail: ArrayBuffer | null;
-          transform: {[name: string]: number} | null;
-        }
-        const oldRecord: IOldRecord = cursor.value;
-
-        const listRecord: IListRecord = {
-          editedId: null,
-          guid: '',
-          id: null,
-          originalId: null,
-          thumbnailId: null,
-          transform: oldRecord.transform,
-        };
-
-        const originalPut = mediaStore.put(oldRecord.original);
-        originalPut.onerror = (reason) => this.error(reason);
-        originalPut.onsuccess = () => {
-          listRecord.originalId = originalPut.result;
-
-          if (oldRecord.edited) {
-            const editedPut = mediaStore.put(oldRecord.edited);
-            editedPut.onerror = (reason) => this.error(reason);
-            editedPut.onsuccess = () => {
-              listRecord.editedId = editedPut.result;
-              listStore.put(listRecord);
-            };
-          } else {
-            listStore.put(listRecord);
-          }
-        };
-
-        cursor.continue();
-      } else {
-        transaction.db.deleteObjectStore('images');
-      }
-    };
   }
 }
 
