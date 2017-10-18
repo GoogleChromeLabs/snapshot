@@ -19,6 +19,23 @@ const random = (min: number, max: number): number => {
 };
 
 export default class FilterTransform {
+  static from(data: {[name: string]: number} | null) {
+    const result = new FilterTransform();
+
+    if (data) {
+      result.saturation = data.saturation || result.saturation;
+      result.warmth = data.warmth || result.warmth;
+      result.sharpen = data.sharpen || result.sharpen;
+      result.blur = data.blur || result.blur;
+      result.brightness = data.brightness || result.brightness;
+      result.contrast = data.contrast || result.contrast;
+      result.grey = data.grey || result.grey;
+      result.vignette = data.vignette || result.vignette;
+    }
+
+    return result;
+  }
+
   saturation: number;
   warmth: number;
   sharpen: number;

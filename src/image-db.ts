@@ -11,9 +11,25 @@
   limitations under the License.
 */
 
-import ImageRecord from './image-record';
+import {blobToArrayBuffer} from './promise-helpers';
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
+
+export interface IListRecord {
+  id: number | null;
+  guid: string;
+
+  originalId: number | null;
+  editedId: number | null;
+  thumbnailId: number | null;
+
+  transform: {[name: string]: number} | null;
+}
+
+interface IMediaRecord {
+  media: ArrayBuffer;
+  type: string;
+}
 
 class ImageDB {
   private dbPromise: Promise<IDBDatabase>;
@@ -34,14 +50,18 @@ class ImageDB {
   }
 
   /**
-   * Store an image in the database. If the `id` property of the record is not
-   * set, this will create a new entry. Returns the ID of the record.
+   * Store an image record in the database. If the `id` property of the
+   * record is not set, this will create a new entry. Returns the ID of the
+   * record.
    */
-  store(record: ImageRecord): Promise<number> {
+  storeRecord(record: IListRecord): Promise<number> {
+    if (record.id === null) {
+      delete record.id;
+    }
     const promise: Promise<number> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
-        const transaction = db.transaction(['images'], 'readwrite');
-        const put = transaction.objectStore('images').put(record);
+        const transaction = db.transaction(['list'], 'readwrite');
+        const put = transaction.objectStore('list').put(record);
 
         put.onsuccess = (event) => resolve(put.result);
         put.onerror = reject;
@@ -51,11 +71,11 @@ class ImageDB {
     return promise;
   }
 
-  retrieve(id: number): Promise<ImageRecord> {
-    const promise: Promise<ImageRecord> = new Promise((resolve, reject) => {
+  retrieveRecord(id: number): Promise<IListRecord> {
+    const promise: Promise<IListRecord> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
-        const transaction = db.transaction(['images'], 'readonly');
-        const get = transaction.objectStore('images').get(id);
+        const transaction = db.transaction(['list'], 'readonly');
+        const get = transaction.objectStore('list').get(id);
 
         get.onsuccess = (event) => resolve(get.result);
         get.onerror = reject;
@@ -65,12 +85,49 @@ class ImageDB {
     return promise;
   }
 
-  all(): Promise<ImageRecord[]> {
-    const promise: Promise<ImageRecord[]> = new Promise((resolve, reject) => {
+  async storeMedia(media: Blob, id?: number): Promise<number> {
+    const buffer = await blobToArrayBuffer(media);
+    const record = {
+      media: buffer,
+      type: media.type,
+    };
+    const promise: Promise<number> = new Promise((resolve, reject) => {
       this.dbPromise.then((db) => {
-        const transaction = db.transaction(['images'], 'readonly');
-        const open = transaction.objectStore('images').openCursor();
-        const results: ImageRecord[] = [];
+        const transaction = db.transaction(['media'], 'readwrite');
+        const put = transaction.objectStore('media').put(record, id);
+
+        put.onsuccess = (event) => resolve(put.result);
+        put.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  retrieveMedia(id: number): Promise<Blob> {
+    const promise: Promise<Blob> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['media'], 'readonly');
+        const get = transaction.objectStore('media').get(id);
+
+        get.onsuccess = (event) => {
+          const record = get.result as IMediaRecord;
+          const blob = new Blob([record.media], {type: record.type});
+          resolve(blob);
+        };
+        get.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  all(): Promise<IListRecord[]> {
+    const promise: Promise<IListRecord[]> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['list'], 'readonly');
+        const open = transaction.objectStore('list').openCursor();
+        const results: IListRecord[] = [];
 
         open.onsuccess = (event) => {
           const cursor = open.result as IDBCursorWithValue;
@@ -104,13 +161,13 @@ class ImageDB {
     const request: IDBOpenDBRequest = event.target as IDBOpenDBRequest;
     const db: IDBDatabase = request.result;
 
-    switch (event.oldVersion) {
-      case 1:
-        db.deleteObjectStore('images');
-      case 0:
-        db.createObjectStore('images', {keyPath: 'id', autoIncrement: true});
+    db.createObjectStore('media', {autoIncrement: true});
+    db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
+
+    if (event.oldVersion !== 0) {
+      db.deleteObjectStore('images');
     }
   }
 }
 
-export default new ImageDB();
+export const imageDB = new ImageDB();

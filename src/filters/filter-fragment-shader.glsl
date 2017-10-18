@@ -79,13 +79,13 @@ void main() {
   vec3 desaturated = vec3(dot(saturationVector, tex.rgb));
   vec3 mixed = mix(desaturated, tex.rgb, saturation);
   vec4 color = vec4(mixed, tex.a);
+
   color.r += warmth;
   color.b -= warmth;
 
-  // This is the dumbest naming ever
-  vec3 gray = vec3(grey, grey, grey);
+  vec3 greyVec = vec3(grey, grey, grey);
 
-  color.rgb = mix(color.rgb * brightness, mix(gray, color.rgb, contrast), 0.5);
+  color.rgb = mix(color.rgb * brightness, mix(greyVec, color.rgb, contrast), 0.5);
 
   float ratio = off.x / off.y;
   float dist = sqrt(pow(texCoords.x - 0.5, 2.0) + pow(ratio * (texCoords.y - 0.5), 2.0));
