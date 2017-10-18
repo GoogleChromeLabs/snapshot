@@ -36,7 +36,7 @@ function glsl() {
   };
 }
 
-export default {
+const appConfig = {
   entry: 'src/index.ts',
   format: 'cjs',
   plugins: [
@@ -51,3 +51,20 @@ export default {
   dest: 'public/app.min.js',
   sourceMap: true,
 };
+
+const swConfig = {
+  entry: 'src/service-worker/sw.ts',
+  format: 'cjs',
+  plugins: [
+    typescript({
+      typescript: ts,
+    }),
+    babili({
+      comments: false,
+    }),
+  ],
+  dest: 'public/sw.js',
+  sourceMap: true,
+};
+
+export default [appConfig, swConfig];

@@ -13,7 +13,7 @@
 
 import {blobToArrayBuffer} from './promise-helpers';
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export interface IListRecord {
   id: number | null;
@@ -23,12 +23,23 @@ export interface IListRecord {
   editedId: number | null;
   thumbnailId: number | null;
 
-  transform: {[name: string]: number} | null;
+  transform: INumDict | null;
+
+  localFilterChanges: boolean;
+  localImageChanges: boolean;
+  lastSyncVersion: number;
 }
 
 interface IMediaRecord {
   media: ArrayBuffer;
   type: string;
+}
+
+export interface ISyncRecord {
+  id: number;
+  guid: string;
+  upload: boolean;
+  includeMedia: boolean;
 }
 
 class ImageDB {
@@ -85,6 +96,24 @@ class ImageDB {
     return promise;
   }
 
+  deleteRecord(id: number, mediaIds: number[] = []): Promise<void> {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['list', 'media'], 'readwrite');
+
+        for (const mediaId of mediaIds) {
+          transaction.objectStore('media').delete(mediaId);
+        }
+        transaction.objectStore('list').delete(id);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
   async storeMedia(media: Blob, id?: number): Promise<number> {
     const buffer = await blobToArrayBuffer(media);
     const record = {
@@ -115,6 +144,87 @@ class ImageDB {
           const blob = new Blob([record.media], {type: record.type});
           resolve(blob);
         };
+        get.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  addSync(data: ISyncRecord): Promise<void> {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
+      if (!data.id && !data.guid) {
+        return reject('Neither local nor remote id was given');
+      }
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['sync'], 'readwrite');
+        const put = transaction.objectStore('sync').put(data);
+        put.onsuccess = () => resolve();
+        put.onerror = reject;
+      }).catch(reject);
+    });
+    return promise;
+  }
+
+  removeSync(id: number, guid: string): Promise<void> {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        if (!id && !guid) {
+          return reject('Neither local nor remote id was given');
+        }
+        const key: IDBArrayKey = [id, guid];
+        const transaction = db.transaction(['sync'], 'readwrite');
+        transaction.objectStore('sync').delete(key);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  listSync(): Promise<ISyncRecord[]> {
+    const promise: Promise<ISyncRecord[]> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['sync'], 'readonly');
+        const open = transaction.objectStore('sync').openCursor();
+        const results: ISyncRecord[] = [];
+
+        open.onsuccess = (event) => {
+          const cursor = open.result as IDBCursorWithValue;
+
+          if (cursor) {
+            results.push(cursor.value);
+            cursor.continue();
+          } else {
+            resolve(results);
+          }
+        };
+        open.onerror = reject;
+      }).catch(reject);
+    });
+
+    return promise;
+  }
+
+  setMeta(key: string, value: any): Promise<void> {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['metadata'], 'readwrite');
+        const put = transaction.objectStore('metadata').put(value, key);
+        put.onsuccess = () => resolve();
+        put.onerror = reject;
+      }).catch(reject);
+    });
+    return promise;
+  }
+
+  getMeta(key: string): Promise<any> {
+    const promise: Promise<any> = new Promise((resolve, reject) => {
+      this.dbPromise.then((db) => {
+        const transaction = db.transaction(['metadata'], 'readonly');
+        const get = transaction.objectStore('metadata').get(key);
+        get.onsuccess = () => resolve(get.result);
         get.onerror = reject;
       }).catch(reject);
     });
@@ -161,11 +271,18 @@ class ImageDB {
     const request: IDBOpenDBRequest = event.target as IDBOpenDBRequest;
     const db: IDBDatabase = request.result;
 
-    db.createObjectStore('media', {autoIncrement: true});
-    db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
+    if (event.oldVersion < 3) {
+      if (event.oldVersion !== 0) {
+        db.deleteObjectStore('images');
+      }
 
-    if (event.oldVersion !== 0) {
-      db.deleteObjectStore('images');
+      db.createObjectStore('media', {autoIncrement: true});
+      db.createObjectStore('list', {keyPath: 'id', autoIncrement: true});
+    }
+
+    if (event.oldVersion < 4) {
+      db.createObjectStore('metadata');
+      db.createObjectStore('sync', {keyPath: ['id', 'guid']});
     }
   }
 }

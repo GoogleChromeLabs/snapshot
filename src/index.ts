@@ -12,9 +12,12 @@
 */
 
 import router from './router';
+import {resume} from './sync/auth';
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
 }
 
 router.changeHandler();
+
+resume();

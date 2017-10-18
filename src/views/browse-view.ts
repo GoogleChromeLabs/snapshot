@@ -13,14 +13,23 @@
 
 import constants from '../constants';
 import ImageRecord from '../image-record';
+import pubsub from '../pubsub';
 import router from '../router';
+import {login, logout, user} from '../sync/auth';
+import {ChangeType, IChangeEvent} from '../sync/sync';
 import View from './view';
 
 export default class BrowseView extends View {
   private captureButton: HTMLButtonElement;
   private uploadButton: HTMLButtonElement;
+  private loginButton: HTMLButtonElement;
+  private logoutButton: HTMLButtonElement;
+  private loginBar: HTMLElement;
+  private userName: HTMLSpanElement;
+  private userImage: HTMLImageElement;
   private emptyListElement: HTMLElement;
   private listElement: HTMLElement;
+  private thumbnails: Map<number, HTMLElement>;
   private blobURLs: Set<string>;
 
   constructor() {
@@ -28,8 +37,13 @@ export default class BrowseView extends View {
 
     this.captureButton = document.getElementById('browse-capture-button') as HTMLButtonElement;
     this.uploadButton = document.getElementById('browse-upload-button') as HTMLButtonElement;
-    this.emptyListElement = document.getElementById('empty-browse-list') as HTMLButtonElement;
-    this.listElement = document.getElementById('browse-list') as HTMLButtonElement;
+    this.loginButton = document.getElementById('login-button') as HTMLButtonElement;
+    this.logoutButton = document.getElementById('logout-button') as HTMLButtonElement;
+    this.loginBar = document.getElementById('login-bar')!;
+    this.userName = document.getElementById('user-name')!;
+    this.userImage = document.getElementById('user-image') as HTMLImageElement;
+    this.emptyListElement = document.getElementById('empty-browse-list')!;
+    this.listElement = document.getElementById('browse-list')!;
 
     if (!constants.SUPPORTS_MEDIA_DEVICES) {
       this.captureButton.classList.add('hidden');
@@ -37,38 +51,25 @@ export default class BrowseView extends View {
 
     this.captureButton.addEventListener('click', () => this.captureClick());
     this.uploadButton.addEventListener('click', () => this.uploadClick());
+    this.loginButton.addEventListener('click', () => this.loginClick());
+    this.logoutButton.addEventListener('click', () => this.logoutClick());
 
+    this.thumbnails = new Map();
     this.blobURLs = new Set();
+
+    pubsub.subscribe('login', () => this.authChanged());
+    pubsub.subscribe('logout', () => this.authChanged());
+    pubsub.subscribe('sync', (action) => this.syncHandler(action.data));
   }
 
   async show() {
     const photos = await ImageRecord.getAll();
 
-    if (photos.length === 0) {
-      this.emptyListElement.classList.remove('hidden');
-      this.listElement.classList.add('hidden');
-    } else {
-      this.emptyListElement.classList.add('hidden');
-      this.listElement.classList.remove('hidden');
-
-      for (const record of photos) {
-        const thumb = document.createElement('div');
-        thumb.classList.add('element');
-        thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
-
-        const blob = await record.getThumbnail();
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const image = document.createElement('img');
-          image.src = url;
-          thumb.appendChild(image);
-          this.blobURLs.add(url);
-        } else {
-          // TODO: Handle this error condition
-        }
-        this.listElement.appendChild(thumb);
-      }
+    for (const record of photos) {
+      this.addThumbnail(record);
     }
+
+    this.setListVisibility();
 
     super.show();
   }
@@ -84,6 +85,7 @@ export default class BrowseView extends View {
     for (const url of this.blobURLs) {
       URL.revokeObjectURL(url);
     }
+    this.thumbnails.clear();
     this.blobURLs.clear();
   }
 
@@ -93,5 +95,75 @@ export default class BrowseView extends View {
 
   uploadClick() {
     router.visit('/upload');
+  }
+
+  loginClick() {
+    login();
+  }
+
+  logoutClick() {
+    logout();
+  }
+
+  authChanged() {
+    if (user.token === '') {
+      this.loginBar.classList.remove('is-logged-in');
+    } else {
+      this.loginBar.classList.add('is-logged-in');
+      this.userName.innerText = user.name;
+      this.userImage.src = user.imageURL;
+    }
+  }
+
+  private setListVisibility() {
+    if (this.thumbnails.size === 0) {
+      this.emptyListElement.classList.remove('hidden');
+      this.listElement.classList.add('hidden');
+    } else {
+      this.emptyListElement.classList.add('hidden');
+      this.listElement.classList.remove('hidden');
+    }
+  }
+
+  private async addThumbnail(record: ImageRecord) {
+    const thumb = document.createElement('div');
+    thumb.classList.add('element');
+    thumb.addEventListener('click', () => router.visit(`/edit/${record.id}`));
+
+    this.thumbnails.set(record.id!, thumb);
+
+    const blob = await record.getThumbnail();
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const image = document.createElement('img');
+      image.src = url;
+      thumb.appendChild(image);
+      this.blobURLs.add(url);
+    } else {
+      // TODO: Handle this error condition
+    }
+    this.listElement.appendChild(thumb);
+  }
+
+  private async syncHandler(event: IChangeEvent) {
+    switch (event.type) {
+      case ChangeType.REMOVE:
+        if (this.thumbnails.has(event.id)) {
+          this.listElement.removeChild(this.thumbnails.get(event.id)!);
+          this.thumbnails.delete(event.id);
+        }
+        break;
+      case ChangeType.ADD:
+        this.addThumbnail(await ImageRecord.fromDatabase(event.id));
+        break;
+      case ChangeType.UPDATE:
+        // TODO: Should update the image in place, this is going to swap the order
+        if (this.thumbnails.has(event.id)) {
+          this.listElement.removeChild(this.thumbnails.get(event.id)!);
+        }
+        this.addThumbnail(await ImageRecord.fromDatabase(event.id));
+        break;
+    }
+    this.setListVisibility();
   }
 }

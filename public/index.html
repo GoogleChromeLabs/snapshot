@@ -157,7 +157,7 @@
       #browse-list {
         display: flex;
         flex-wrap: wrap;
-        overflow-y: scroll;
+        overflow-y: auto;
       }
 
       #browse-list .element:after {
@@ -167,8 +167,32 @@
       }
 
       #browse-list .element {
-        width: 50%;
+        width: 100%;
         position: relative;
+      }
+
+      @media (min-width: 400px) and (max-width: 800px) {
+        #browse-list .element {
+          width: 50%;
+        }
+      }
+
+      @media (min-width: 800px) and (max-width: 1200px) {
+        #browse-list .element {
+          width: 33.33%;
+        }
+      }
+
+      @media (min-width: 1200px) and (max-width: 1600px) {
+        #browse-list .element {
+          width: 25%;
+        }
+      }
+
+      @media (min-width: 1600px) {
+        #browse-list .element {
+          width: 20%;
+        }
       }
 
       #browse-list .element * {
@@ -188,6 +212,49 @@
 
       #browse-view button:focus, #browse-view button:hover {
         background-color: white;
+      }
+
+      #login-bar {
+        height: 40px;
+        background-color: #535353;
+        box-shadow: 1px 3px 10px black;
+      }
+
+      #login-bar .login-status {
+        padding: 10px;
+        display: none;
+      }
+
+      #login-bar:not(.is-logged-in) .login-status.logged-out {
+        display: initial;
+      }
+
+      #login-bar.is-logged-in .login-status.logged-in {
+        display: initial;
+      }
+
+      #login-bar .login-status button {
+        background-color: #2196F3;
+        box-shadow: black 1px 2px;
+        overflow: hidden;
+        border: none;
+        color: white;
+        padding: 8px;
+        width: auto;
+        height: auto;
+        border-radius: 4px;
+      }
+
+      .login-status button:hover, .login-status button:focus {
+        background-color: #d0d0d0;
+        outline: 0;
+      }
+
+      #user-image {
+        width: 35px;
+        border-radius: 50%;
+        padding: 20px;
+        vertical-align: middle;
       }
 
       /* Capture */
@@ -272,7 +339,7 @@
 
       /* Edit */
 
-      #edit-dest canvas {
+      canvas#edit-dest {
         max-width: calc(100% - 40px);
         max-height: calc(100% - 20px);
         box-shadow: 1px 3px 10px black;
@@ -280,7 +347,7 @@
         margin: 0 auto;
       }
 
-      #edit-dest {
+      #edit-container {
         width: 100%;
         height: 100%;
         overflow: hidden;
@@ -563,6 +630,14 @@
     <!-- Browse -->
 
     <div class="view-element hidden" id="browse-view">
+      <div id="login-bar" class="toolbar right">
+        <div class="login-status logged-in">
+          <span id="user-name"></span>
+          <img id="user-image" />
+          <button id="logout-button">Log out</button>
+        </div>
+        <div class="login-status logged-out"><button id="login-button">Log in</button></div>
+      </div>
       <div id="empty-browse-list">
         <svg viewBox="0 0 24 21">
           <use xlink:href="#svg-photo-camera">
@@ -602,7 +677,9 @@
           </svg>
         </button>
       </div>
-      <div id="edit-dest"></div>
+      <div id="edit-container">
+        <canvas id="edit-dest"></canvas>
+      </div>
 
       <!-- Sliders -->
       <div>

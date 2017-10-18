@@ -11,12 +11,13 @@
   limitations under the License.
 */
 
-export default {
-  CLIENT_ID: '151109002640-6hsca3c8lv5eutorkavk157rle1rjsgt.apps.googleusercontent.com',
-  DRIVE_FOLDER: 'Snapshot Photos',
-  IMAGE_TYPE: 'image/jpeg',
-  SUPPORTS_BGSYNC: 'SyncManager' in self,
-  SUPPORTS_IMAGE_CAPTURE: 'ImageCapture' in self,
-  SUPPORTS_MEDIA_DEVICES: 'mediaDevices' in navigator,
-  SYNC_FREQUENCY: 60000, // in milliseconds
-};
+// Some types that are useful everywhere
+interface IStringDict {
+  [key: string]: string;
+}
+
+interface INumDict {
+  [key: string]: number;
+}
+
+declare type ImageSource = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement;
