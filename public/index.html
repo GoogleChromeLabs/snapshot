@@ -17,6 +17,8 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#353535">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#353535">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
       * {
         padding: 0;
@@ -39,8 +41,8 @@
       button.dark, button.light {
         margin: 5px;
         border-radius: 50%;
-        width: 36px;
-        height: 36px;
+        width: 54px;
+        height: 54px;
         background-color: rgba(255, 255, 255, 0);
         overflow: hidden;
         border: none;
@@ -89,7 +91,7 @@
 
       svg {
         fill: currentColor;
-        width: 24px;
+        width: 36px;
       }
 
       .hidden {
@@ -205,8 +207,8 @@
       }
 
       #browse-view button {
-        width: 54px;
-        height: 54px;
+        width: 66px;
+        height: 66px;
         background-color: #50E3C2;
       }
 
@@ -383,7 +385,7 @@
         transform: translateY(100%);
         transition: transform 0.2s, opacity 0.4s, visibility 0.8s;
         position: absolute;
-        left: 46px;
+        left: 64px;
         right: 0;
         overflow-x: auto;
         visibility: hidden;

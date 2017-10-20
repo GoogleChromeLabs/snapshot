@@ -83,12 +83,12 @@ class Router {
         console.log('404');
     }
 
-    if (newView) {
-      this.switch(newView, state);
-    } else {
-      // TODO: Something better?
+    if (!newView) {
       console.log('Oh no, no view found!');
+      return this.visit('/');
     }
+
+    this.switch(newView, state);
   }
 
   switch(newView: View, state: ViewState) {

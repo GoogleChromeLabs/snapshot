@@ -39,6 +39,9 @@ async function doFetch(url: string, init: RequestInit): Promise<Response> {
     if (response.status === 401 || response.status === 403) {
       validate(user.token);
     }
+    if (response.status === 418) {
+      throw new Error(`Alas, the Drive API has become a teapot. Your photos are probably getting wet.`);
+    }
     throw new Error(`Couldn't fetch Drive API result: ${response.statusText}`);
   }
   return response;
