@@ -305,6 +305,10 @@
         outline: 0;
       }
 
+      #stop-record-button .capture-button-inner {
+        color: red;
+      }
+
       #capture-flash-button svg {
         display: none;
       }
@@ -549,6 +553,14 @@
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
         </g>
+        <g id="svg-stop">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M6 6h12v12H6z"/>
+        </g>
+        <g id="svg-videocam">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+        </g>
         <g id="svg-flash-on">
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
@@ -585,10 +597,16 @@
           </button>
           <button id="record-button" class="capture-button" aria-label="Record video" autofocus tabindex="0">
             <div class="capture-button-inner">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-videocam">
+              </svg>
             </div>
           </button>
           <button id="stop-record-button" class="capture-button hidden" aria-label="Stop" autofocus tabindex="0">
             <div class="capture-button-inner">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-stop">
+              </svg>
             </div>
           </button>
         </div>
