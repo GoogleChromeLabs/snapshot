@@ -18,6 +18,7 @@ export default {
   SUPPORTS_BGSYNC: 'SyncManager' in self,
   SUPPORTS_IMAGE_CAPTURE: 'ImageCapture' in self,
   SUPPORTS_MEDIA_DEVICES: 'mediaDevices' in navigator,
+  SUPPORTS_MEDIA_RECORDER: 'MediaRecorder' in self,
   SYNC_FREQUENCY: 60000, // in milliseconds
   VIDEO_TYPE: 'video/webm;codecs=h264',
 };
