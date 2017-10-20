@@ -18,6 +18,7 @@ const DB_VERSION = 4;
 export interface IListRecord {
   id: number | null;
   guid: string;
+  isVideo: boolean;
 
   originalId: number | null;
   editedId: number | null;

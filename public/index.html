@@ -206,6 +206,17 @@
         object-fit: cover;
       }
 
+      .video-thumbnail-overlay {
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.5);
+        width: 50%;
+        height: 50%;
+      }
+
+      .element:hover .video-thumbnail-overlay {
+        display: none;
+      }
+
       #browse-view button {
         width: 66px;
         height: 66px;

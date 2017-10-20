@@ -19,4 +19,5 @@ export default {
   SUPPORTS_IMAGE_CAPTURE: 'ImageCapture' in self,
   SUPPORTS_MEDIA_DEVICES: 'mediaDevices' in navigator,
   SYNC_FREQUENCY: 60000, // in milliseconds
+  VIDEO_TYPE: 'video/webm;codecs=h264',
 };
