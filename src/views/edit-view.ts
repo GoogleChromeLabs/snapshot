@@ -20,7 +20,7 @@ import View from './view';
 
 export default class EditView extends View {
   private destElement: HTMLCanvasElement;
-  private sourceElement: HTMLImageElement | null;
+  private sourceElement: HTMLImageElement | HTMLVideoElement | null;
   private closeButton: HTMLButtonElement;
   private acceptButton: HTMLButtonElement;
   private sliders: Map<string, HTMLInputElement>;
@@ -29,6 +29,7 @@ export default class EditView extends View {
   private tuneSectionButton: HTMLButtonElement;
   private filterSection: HTMLDivElement;
   private tuneSection: HTMLDivElement;
+  private editSection: HTMLDivElement;
   private animationFrame: number;
   private currentRecord: ImageRecord | null;
   private currentPanel: Element | null;
@@ -44,6 +45,7 @@ export default class EditView extends View {
     this.tuneSectionButton = document.getElementById('edit-select-tuning')! as HTMLButtonElement;
     this.filterSection = document.getElementById('edit-filter')! as HTMLDivElement;
     this.tuneSection = document.getElementById('edit-tune')! as HTMLDivElement;
+    this.editSection = document.getElementById('edit-section')! as HTMLDivElement;
 
     this.closeButton.addEventListener('click', () => this.closeClick());
     this.acceptButton.addEventListener('click', () => this.acceptClick());
@@ -110,21 +112,47 @@ export default class EditView extends View {
     this.currentRecord = record;
     this.setTransform(record.transform || new FilterTransform());
     const blob = await record.getOriginal();
-
-    const source = document.createElement('img');
-    this.sourceElement = source;
-    source.onload = () => {
-      URL.revokeObjectURL(source.src);
-      this.transform.apply(source, this.destElement);
-      this.animationFrame = requestAnimationFrame(() => this.draw());
-      this.renderThumbnails();
-    };
-    source.src = URL.createObjectURL(blob);
+    if (record.isVideo) {
+      this.editSection.classList.add('hidden');
+      const source = document.createElement('video');
+      this.sourceElement = source;
+      // TODO: Need a mute control when looping a video
+      source.setAttribute('muted', 'muted');
+      source.setAttribute('playsinline', 'playsinline');
+      source.setAttribute('loop', 'loop');
+      source.oncanplaythrough = () => {
+        source.oncanplaythrough = () => null;
+        URL.revokeObjectURL(source.src);
+        this.transform.apply(source, this.destElement);
+        source.play();
+        const update = () => {
+          this.draw();
+          this.animationFrame = requestAnimationFrame(update);
+        };
+        this.animationFrame = requestAnimationFrame(update);
+        this.renderThumbnails();
+      };
+      source.src = URL.createObjectURL(blob);
+    } else {
+      this.editSection.classList.remove('hidden');
+      const source = document.createElement('img');
+      this.sourceElement = source;
+      source.onload = () => {
+        URL.revokeObjectURL(source.src);
+        this.transform.apply(source, this.destElement);
+        this.animationFrame = requestAnimationFrame(() => this.draw());
+        this.renderThumbnails();
+      };
+      source.src = URL.createObjectURL(blob);
+    }
     super.show();
   }
 
   hide() {
     cancelAnimationFrame(this.animationFrame);
+    if (this.sourceElement instanceof HTMLVideoElement) {
+      this.sourceElement.pause();
+    }
     this.sourceElement = null;
     this.animationFrame = 0;
     this.currentRecord = null;

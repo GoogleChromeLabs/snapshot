@@ -95,7 +95,7 @@
       }
 
       .hidden {
-        display: none;
+        display: none !important;
       }
 
       .toolbar.left {
@@ -206,6 +206,17 @@
         object-fit: cover;
       }
 
+      .video-thumbnail-overlay {
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.5);
+        width: 50%;
+        height: 50%;
+      }
+
+      .element:hover .video-thumbnail-overlay {
+        display: none;
+      }
+
       #browse-view button {
         width: 66px;
         height: 66px;
@@ -265,7 +276,7 @@
         transform: translateX(-50%) scaleX(-1);
       }
 
-      #capture-button-inner {
+      .capture-button-inner {
         width: 64px;
         height: 64px;
         border-radius: 50%;
@@ -273,7 +284,7 @@
         background-color: white;
       }
 
-      #capture-button {
+      .capture-button {
         color: black;
         margin: 10px;
         width: 96px;
@@ -285,13 +296,17 @@
         position: relative;
       }
 
-      #capture-button:focus, #capture-button:hover {
+      .capture-button:focus, .capture-button:hover {
         width: 106px;
         height: 106px;
         border: 5px #50E3C2 solid;
         margin: 5px;
         border-radius: 50%;
         outline: 0;
+      }
+
+      #stop-record-button .capture-button-inner {
+        color: red;
       }
 
       #capture-flash-button svg {
@@ -538,6 +553,14 @@
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
         </g>
+        <g id="svg-stop">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M6 6h12v12H6z"/>
+        </g>
+        <g id="svg-videocam">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+        </g>
         <g id="svg-flash-on">
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
@@ -565,10 +588,24 @@
       </div>
       <div class="toolbar bottom center">
         <div>
-          <button id="capture-button" aria-label="Take photo" title="Take photo" autofocus tabindex="0">
-            <div id="capture-button-inner">
+          <button id="capture-button" class="capture-button" aria-label="Take photo" title="Take photo" autofocus tabindex="0">
+            <div class="capture-button-inner">
               <svg viewBox="0 0 24 24">
                 <use xlink:href="#svg-photo-camera">
+              </svg>
+            </div>
+          </button>
+          <button id="record-button" class="capture-button" aria-label="Record video" autofocus tabindex="0">
+            <div class="capture-button-inner">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-videocam">
+              </svg>
+            </div>
+          </button>
+          <button id="stop-record-button" class="capture-button hidden" aria-label="Stop" autofocus tabindex="0">
+            <div class="capture-button-inner">
+              <svg viewBox="0 0 24 24">
+                <use xlink:href="#svg-stop">
               </svg>
             </div>
           </button>
@@ -709,7 +746,7 @@
         </div>
       </div>
 
-      <div class="bottom-ui bottom center">
+      <div id="edit-section" class="bottom-ui bottom center">
         <div id="edit-section-toggle">
           <button id="edit-select-filters" class="dark edit-select-button selected" aria-label="Filters" title="Filters" tabindex="0">
             <svg viewBox="0 0 24 24">

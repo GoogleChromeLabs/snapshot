@@ -12,6 +12,7 @@
 */
 
 import CameraHelper from '../camera-helper';
+import constants from '../constants';
 import ImageRecord from '../image-record';
 import router from '../router';
 import View from './view';
@@ -20,6 +21,8 @@ export default class CaptureView extends View {
   private videoElement: HTMLVideoElement;
   private videoElement2: HTMLVideoElement;
   private takePhotoButton: HTMLButtonElement;
+  private recordButton: HTMLButtonElement;
+  private stopRecordButton: HTMLButtonElement;
   private cameraChooseButton: HTMLButtonElement;
   private mirrorButton: HTMLButtonElement;
   private flashButton: HTMLButtonElement;
@@ -35,16 +38,24 @@ export default class CaptureView extends View {
     this.videoElement = this.viewElement.querySelector('video#preview')! as HTMLVideoElement;
     this.videoElement2 = this.viewElement.querySelector('video#preview2')! as HTMLVideoElement;
     this.takePhotoButton = document.getElementById('capture-button')! as HTMLButtonElement;
+    this.recordButton = document.getElementById('record-button')! as HTMLButtonElement;
+    this.stopRecordButton = document.getElementById('stop-record-button')! as HTMLButtonElement;
     this.cameraChooseButton = document.getElementById('camera-choose-button')! as HTMLButtonElement;
     this.mirrorButton = document.getElementById('capture-mirror-button')! as HTMLButtonElement;
     this.flashButton = document.getElementById('capture-flash-button')! as HTMLButtonElement;
     this.closeButton = document.getElementById('capture-view-close')! as HTMLButtonElement;
+
+    if (!constants.SUPPORTS_MEDIA_RECORDER) {
+      this.recordButton.classList.add('hidden');
+    }
 
     this.videoElement2.classList.add('hidden');
 
     this.cameraHelper = new CameraHelper();
 
     this.takePhotoButton.addEventListener('click', () => this.takePhoto());
+    this.recordButton.addEventListener('click', () => this.startRecording());
+    this.stopRecordButton.addEventListener('click', () => this.stopRecording());
     this.cameraChooseButton.addEventListener('click', () => this.toggleCameraChooser());
     this.mirrorButton.addEventListener('click', () => this.toggleMirror());
     this.flashButton.addEventListener('click', () => this.toggleFlash());
@@ -64,6 +75,8 @@ export default class CaptureView extends View {
   hide() {
     this.cameraHelper.stopStream();
     this.videoElement.pause();
+    this.stopRecordButton.classList.add('hidden');
+    this.recordButton.classList.remove('hidden');
     super.hide();
   }
 
@@ -82,9 +95,24 @@ export default class CaptureView extends View {
   async takePhoto() {
     const blob = await this.cameraHelper.takePhoto(this.videoElement);
     if (blob) {
-      this.storeResult(blob);
+      this.storeResult(blob, false);
     } else {
       // TODO: This is an unhandled error condition
+    }
+  }
+
+  startRecording() {
+    this.stopRecordButton.classList.remove('hidden');
+    this.recordButton.classList.add('hidden');
+    this.cameraHelper.startRecording();
+  }
+
+  async stopRecording() {
+    this.stopRecordButton.classList.remove('hidden');
+    this.recordButton.classList.add('hidden');
+    const result = await this.cameraHelper.stopRecording();
+    if (result) {
+      this.storeResult(result, true);
     }
   }
 
@@ -136,9 +164,10 @@ export default class CaptureView extends View {
     }
   }
 
-  private async storeResult(blob: Blob) {
+  private async storeResult(blob: Blob, isVideo: boolean) {
     const record = new ImageRecord();
     record.setOriginal(blob);
+    record.isVideo = isVideo;
     await record.save();
     router.visit(`/edit/${record.id}`);
   }

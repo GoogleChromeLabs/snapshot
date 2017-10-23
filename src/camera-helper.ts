@@ -13,6 +13,7 @@
 
 import constants from './constants';
 import {canvasToBlob} from './promise-helpers';
+import VideoRecording from './video-recording';
 
 const streamConstraints: MediaStreamConstraints = {
   video: {
@@ -36,10 +37,12 @@ export default class CameraHelper {
   private track: MediaStreamTrack | null;
   private trackConstraints: MediaTrackSettings;
   private photoCapabilities: PhotoCapabilities | null;
+  private recording: VideoRecording | null;
 
   constructor() {
     this.stream = null;
     this.track = null;
+    this.recording = null;
 
     this.photoCapabilities = null;
     this.trackConstraints = {};
@@ -92,12 +95,21 @@ export default class CameraHelper {
     }
   }
 
+  stop() {
+    this.stopStream();
+    if (this.recording) {
+      this.recording.cancel();
+    }
+  }
+
   stopStream() {
     if (this.stream) {
       for (const track of this.stream.getVideoTracks()) {
         track.stop();
       }
     }
+    this.stream = null;
+    this.track = null;
   }
 
   async startStream(deviceId: string) {
@@ -137,5 +149,22 @@ export default class CameraHelper {
       return {};
     }
     return this.track.getSettings();
+  }
+
+  startRecording() {
+    if (this.stream) {
+      this.recording = new VideoRecording(this.stream);
+      this.recording.start();
+    }
+  }
+
+  async stopRecording(): Promise<Blob | null> {
+    let result: Blob | null = null;
+    if (this.recording) {
+      result = await this.recording.end();
+      return result;
+    }
+    this.recording = null;
+    return null;
   }
 }

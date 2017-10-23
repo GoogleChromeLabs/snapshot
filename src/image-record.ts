@@ -34,6 +34,7 @@ export default class ImageRecord {
 
     result.id = data.id;
     result.guid = data.guid;
+    result.isVideo = data.isVideo;
 
     result.originalState = ImageState.NOT_LOADED;
     result.editedState = ImageState.NOT_LOADED;
@@ -65,6 +66,7 @@ export default class ImageRecord {
 
   id: number | null;
   guid: string;
+  isVideo: boolean;
 
   originalState: ImageState;
   editedState: ImageState;
@@ -87,6 +89,7 @@ export default class ImageRecord {
   constructor() {
     this.id = null;
     this.guid = '';
+    this.isVideo = false;
 
     this.originalState = ImageState.CHANGED;
     this.editedState = ImageState.CHANGED;
@@ -180,18 +183,31 @@ export default class ImageRecord {
     const original = await this.getOriginal();
     const result: Promise<Blob | null> = new Promise((resolve, reject) => {
       if (original) {
-        const source = document.createElement('img');
-        source.onload = () => {
+        let source: HTMLImageElement | HTMLVideoElement;
+        const handler = () => {
+          URL.revokeObjectURL(source.src);
           if (this.transform) {
             const canvas = document.createElement('canvas');
-            URL.revokeObjectURL(source.src);
             this.transform.apply(source, canvas, height);
             resolve(canvasToBlob(canvas, constants.IMAGE_TYPE));
           } else {
             resolve(null);
           }
         };
-        source.onerror = reject;
+        if (this.isVideo) {
+          source = document.createElement('video');
+          source.setAttribute('muted', 'muted');
+          source.setAttribute('playsinline', 'playsinline');
+          source.setAttribute('loop', 'loop');
+          source.oncanplaythrough = handler;
+        } else {
+          source = document.createElement('img');
+          source.onload = handler;
+        }
+        source.onerror = (reason) => {
+          URL.revokeObjectURL(source.src);
+          reject(reason);
+        };
         source.src = URL.createObjectURL(original);
       }
     });
@@ -232,6 +248,7 @@ export default class ImageRecord {
       editedId: this.editedId,
       guid: this.guid,
       id: this.id,
+      isVideo: this.isVideo,
       lastSyncVersion: this.lastSyncVersion,
       localFilterChanges: this.localFilterChanges,
       localImageChanges: this.localImageChanges,

@@ -214,6 +214,7 @@ downloadRemote(remote: DriveFile, includeMedia: boolean, local?: IListRecord): P
       editedId: null,
       guid: '',
       id: null,
+      isVideo: /video/.test(original.type),
       lastSyncVersion: -1,
       localFilterChanges: false,
       localImageChanges: false,

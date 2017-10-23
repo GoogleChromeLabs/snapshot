@@ -135,10 +135,43 @@ export default class BrowseView extends View {
     const blob = await record.getThumbnail();
     if (blob) {
       const url = URL.createObjectURL(blob);
-      const image = document.createElement('img');
-      image.src = url;
-      thumb.appendChild(image);
       this.blobURLs.add(url);
+
+      if (record.isVideo) {
+        // TODO: Currently, `edited` is always an image, but it will be a
+        // video. So edited will change from thumbnail to video.
+        const videoBlob = await record.getOriginal();
+        if (videoBlob) {
+          const videoURL = URL.createObjectURL(videoBlob);
+          this.blobURLs.add(videoURL);
+          const video = document.createElement('video');
+          video.muted = true;
+          video.src = videoURL;
+          video.loop = true;
+          video.onloadedmetadata = () => {
+            thumb.addEventListener('mouseover', () => video.play());
+            thumb.addEventListener('mouseout', () => video.pause());
+          };
+
+          video.poster = url;
+
+          thumb.appendChild(video);
+          const overlay = document.createElement('svg');
+          thumb.appendChild(overlay);
+
+          overlay.outerHTML = `<svg class="video-thumbnail-overlay" viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
+          </svg>`;
+
+        } else {
+          // TODO: Handle this error condition
+        }
+      } else {
+        const image = document.createElement('img');
+        image.src = url;
+        thumb.appendChild(image);
+      }
     } else {
       // TODO: Handle this error condition
     }
