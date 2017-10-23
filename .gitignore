@@ -1,2 +1,4 @@
 node_modules/
 .firebaserc
+public/*.js
+public/*.js.map
