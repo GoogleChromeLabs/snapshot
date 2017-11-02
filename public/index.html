@@ -134,6 +134,40 @@
         z-index: -1;
       }
 
+      /* Toaster */
+
+      #toaster {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .toast {
+        margin: 6px auto;
+        width: 300px;
+        box-shadow: black 3px 3px;
+        padding: 10px;
+        background: #535353;
+        max-height: 100px;
+      }
+
+      .toast button {
+        float: right;
+        background-color: rgba(255, 255, 255, 0);
+        border: none;
+        color: yellow;
+      }
+
+      .disappearing {
+        opacity: 0;
+        max-height: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        transition: all 0.3s;
+      }
+
       /* Browse */
 
       #empty-browse-list {
@@ -411,6 +445,10 @@
         margin: auto;
       }
 
+      #edit-download-button {
+        margin-left: auto;
+      }
+
       .slider-panel {
         position: absolute;
         bottom: 120px;
@@ -550,6 +588,10 @@
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M3 2v12h3v9l7-12H9l4-9H3zm16 0h-2l-3.2 9h1.9l.7-2h3.2l.7 2h1.9L19 2zm-2.15 5.65L18 4l1.15 3.65h-2.3z"/>
         </g>
+        <g id="svg-file-download">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+        </g>
       </defs>
     </svg>
 
@@ -653,7 +695,7 @@
       <div class="toolbar bottom floating right">
         <button class="light" id="browse-upload-button" aria-label="Upload photo" title="Upload photo" tabindex="0">
           <svg viewBox="0 0 24 24">
-            <use xlink:href="#svg-add-a-photo">
+            <use xlink:href="#svg-file-upload">
           </svg>
         </button>
         <button class="light" id="browse-capture-button" aria-label="Take photo" title="Take photo" tabindex="0">
@@ -678,6 +720,12 @@
             <use xlink:href="#svg-check">
           </svg>
         </button>
+        <button class="dark" id="edit-download-button">
+          <svg viewBox="0 0 24 24">
+            <use xlink:href="#svg-file-download">
+          </svg>
+        </button>
+        <a id="edit-download-anchor" class="hidden" download="snapshot-image.jpg"></a>
       </div>
       <div id="edit-container">
         <canvas id="edit-dest"></canvas>
@@ -766,6 +814,10 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div id="toaster">
+
     </div>
 
     <noscript>

@@ -11,19 +11,15 @@
   limitations under the License.
 */
 
-import pubsub from './pubsub';
-import router from './router';
-import {resume} from './sync/auth';
-import {show} from './toaster';
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+interface HTMLMediaElement {
+  captureStream(): MediaStream;
 }
 
-pubsub.subscribe('toast', (action) => {
-  show(action.data.message, action.data.sticky);
-});
+interface HTMLCanvasElement {
+  captureStream(frameRequestRate?: number): MediaStream;
+}
 
-router.changeHandler();
-
-resume();
+interface CanvasCaptureMediaStreamTrack extends MediaStreamTrack {
+  readonly canvas: HTMLCanvasElement;
+  requestFrame(): void;
+}

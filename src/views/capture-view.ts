@@ -56,7 +56,9 @@ export default class CaptureView extends View {
 
   show() {
     this.devicesPromise.then((devices) => {
-      this.chooseCamera(devices[0]);
+      if (devices.length > 0) {
+        this.chooseCamera(devices[0]);
+      }
     });
     super.show();
   }

@@ -23,6 +23,8 @@ export default class EditView extends View {
   private sourceElement: HTMLImageElement | null;
   private closeButton: HTMLButtonElement;
   private acceptButton: HTMLButtonElement;
+  private downloadButton: HTMLButtonElement;
+  private downloadAnchor: HTMLAnchorElement;
   private sliders: Map<string, HTMLInputElement>;
   private effectButtons: Set<HTMLButtonElement>;
   private filterSectionButton: HTMLButtonElement;
@@ -42,6 +44,8 @@ export default class EditView extends View {
     this.acceptButton = document.getElementById('edit-view-accept')! as HTMLButtonElement;
     this.filterSectionButton = document.getElementById('edit-select-filters')! as HTMLButtonElement;
     this.tuneSectionButton = document.getElementById('edit-select-tuning')! as HTMLButtonElement;
+    this.downloadButton = document.getElementById('edit-download-button')! as HTMLButtonElement;
+    this.downloadAnchor = document.getElementById('edit-download-anchor')! as HTMLAnchorElement;
     this.filterSection = document.getElementById('edit-filter')! as HTMLDivElement;
     this.tuneSection = document.getElementById('edit-tune')! as HTMLDivElement;
 
@@ -49,6 +53,7 @@ export default class EditView extends View {
     this.acceptButton.addEventListener('click', () => this.acceptClick());
     this.filterSectionButton.addEventListener('click', () => this.toggleSection());
     this.tuneSectionButton.addEventListener('click', () => this.toggleSection());
+    this.downloadButton.addEventListener('click', () => this.downloadClick());
 
     this.transform = new FilterTransform();
 
@@ -240,5 +245,21 @@ export default class EditView extends View {
     this.save().then(() => {
       router.visit(`/browse`);
     });
+  }
+
+  private async downloadClick() {
+    // TODO: This will need to be different for video, just downloading the
+    // source.
+    if (this.currentRecord) {
+      await this.save();
+      const blob = await this.currentRecord.getEdited();
+      const url = URL.createObjectURL(blob);
+      const anchor = this.downloadAnchor;
+      anchor.href = url;
+      setTimeout(() => {
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 250);
+      }, 66);
+    }
   }
 }
